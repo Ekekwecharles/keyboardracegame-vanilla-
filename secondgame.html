@@ -1,0 +1,2240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>REDLINE // Type Racer</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+      :root {
+        --asphalt: #0a0e14;
+        --asphalt-2: #11161f;
+        --asphalt-3: #171d29;
+        --line: #232b3a;
+        --violet: #8b5cf6;
+        --cyan: #22d3ee;
+        --pink: #f43f5e;
+        --amber: #fbbf24;
+        --green: #34d399;
+        --fog: #b7bec9;
+        --dim: #6b7386;
+        --white: #eef1f6;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--asphalt);
+        color: var(--white);
+        font-family: "JetBrains Mono", monospace;
+      }
+      ::selection {
+        background: var(--violet);
+        color: white;
+      }
+
+      #app {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 22px 18px 60px;
+      }
+
+      /* ---------- HEADER ---------- */
+      header.top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+      .brand {
+        display: flex;
+        flex-direction: column;
+      }
+      .eyebrow {
+        font-family: "Orbitron", sans-serif;
+        font-size: 11px;
+        letter-spacing: 5px;
+        color: var(--cyan);
+        text-transform: uppercase;
+        margin: 0 0 2px;
+      }
+      h1 {
+        font-family: "Orbitron", sans-serif;
+        font-weight: 900;
+        font-size: clamp(26px, 5vw, 38px);
+        margin: 0;
+        letter-spacing: 1px;
+        background: linear-gradient(
+          90deg,
+          var(--white),
+          var(--cyan) 60%,
+          var(--violet)
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .headstats {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--asphalt-2);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 7px 13px;
+        font-size: 12px;
+      }
+      .chip b {
+        color: var(--white);
+        font-family: "Orbitron", sans-serif;
+      }
+      .chip.level {
+        color: var(--cyan);
+      }
+      .chip.coins {
+        color: var(--amber);
+      }
+      .pro-btn {
+        font-family: "Orbitron", sans-serif;
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        font-weight: 700;
+        background: linear-gradient(90deg, var(--amber), var(--pink));
+        color: #12070a;
+        border: none;
+        border-radius: 999px;
+        padding: 9px 16px;
+        cursor: pointer;
+      }
+      .pro-btn.is-pro {
+        background: var(--asphalt-2);
+        color: var(--amber);
+        border: 1px solid var(--amber);
+      }
+
+      /* ---------- NAV ---------- */
+      nav.tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--line);
+        overflow-x: auto;
+      }
+      nav.tabs button {
+        font-family: "Orbitron", sans-serif;
+        font-size: 12px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        background: none;
+        border: none;
+        color: var(--dim);
+        padding: 10px 14px;
+        cursor: pointer;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+      }
+      nav.tabs button.active {
+        color: var(--white);
+        border-bottom-color: var(--cyan);
+      }
+      nav.tabs button:hover {
+        color: var(--fog);
+      }
+
+      .panel {
+        display: none;
+      }
+      .panel.active {
+        display: block;
+        animation: fadein 0.25s ease;
+      }
+      @keyframes fadein {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      .card {
+        background: var(--asphalt-2);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 18px 20px;
+      }
+      .card + .card {
+        margin-top: 14px;
+      }
+      .card h2 {
+        font-family: "Orbitron", sans-serif;
+        font-size: 14px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--fog);
+        margin: 0 0 14px;
+      }
+      .row {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .hint {
+        font-size: 11px;
+        color: var(--dim);
+        margin-top: 6px;
+        line-height: 1.5;
+      }
+      .note {
+        font-size: 11px;
+        color: var(--dim);
+        background: var(--asphalt-3);
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-top: 10px;
+        line-height: 1.5;
+      }
+      .note b {
+        color: var(--fog);
+      }
+
+      button,
+      select,
+      input[type="text"],
+      input[type="number"] {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        background: var(--asphalt-3);
+        color: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 9px 12px;
+      }
+      button {
+        cursor: pointer;
+        font-family: "Orbitron", sans-serif;
+        font-size: 11px;
+        letter-spacing: 1px;
+      }
+      button.primary {
+        background: linear-gradient(90deg, var(--violet), var(--cyan));
+        color: #0a0e14;
+        font-weight: 700;
+        border: none;
+      }
+      button.primary:hover {
+        filter: brightness(1.1);
+      }
+      button.ghost {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--fog);
+      }
+      button.ghost:hover {
+        border-color: var(--cyan);
+        color: var(--white);
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      select:focus,
+      input:focus,
+      button:focus-visible {
+        outline: 2px solid var(--cyan);
+        outline-offset: 2px;
+      }
+
+      /* ---------- RACE HUD ---------- */
+      .hud {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+      .gauge {
+        flex: 1;
+        min-width: 100px;
+        background: var(--asphalt-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 14px;
+      }
+      .gauge-label {
+        font-family: "Orbitron", sans-serif;
+        font-size: 10px;
+        letter-spacing: 2px;
+        color: var(--dim);
+        text-transform: uppercase;
+      }
+      .gauge-value {
+        font-family: "Orbitron", sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+      }
+      #wpmVal {
+        color: var(--cyan);
+      }
+      #accVal {
+        color: var(--amber);
+      }
+      #comboVal {
+        color: var(--pink);
+      }
+      #penVal {
+        color: var(--fog);
+      }
+
+      .track-wrap {
+        background: var(--asphalt-2);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px 16px 12px;
+        margin-bottom: 14px;
+      }
+      .lane {
+        position: relative;
+        height: 44px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        background: var(--asphalt-3);
+        overflow: hidden;
+      }
+      .lane .stripes {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: repeating-linear-gradient(
+          90deg,
+          #3b4457 0 18px,
+          transparent 18px 36px
+        );
+        transform: translateY(-50%);
+      }
+      .lane.moving .stripes {
+        animation: dash 0.6s linear infinite;
+      }
+      @keyframes dash {
+        from {
+          background-position-x: 0;
+        }
+        to {
+          background-position-x: -36px;
+        }
+      }
+      .finish {
+        position: absolute;
+        right: 6px;
+        top: 0;
+        bottom: 0;
+        width: 7px;
+        background: repeating-linear-gradient(45deg, #fff 0 4px, #111 4px 8px);
+        border-radius: 3px;
+        opacity: 0.85;
+      }
+      .vehicle {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        transform: translate(0, -50%);
+        font-size: 24px;
+        transition:
+          left 0.12s linear,
+          filter 0.15s;
+      }
+      .vehicle .tag {
+        font-family: "Orbitron", sans-serif;
+        font-size: 9px;
+        color: var(--dim);
+        position: absolute;
+        top: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: nowrap;
+      }
+      .boosting .vehicle.you {
+        filter: drop-shadow(0 0 12px var(--cyan))
+          drop-shadow(0 0 4px var(--pink));
+      }
+      .vehicle.you {
+        filter: drop-shadow(0 0 5px var(--cyan));
+      }
+
+      .text-panel {
+        background: var(--asphalt-2);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 20px 22px;
+        font-size: 19px;
+        line-height: 1.7;
+        letter-spacing: 0.3px;
+        min-height: 92px;
+        position: relative;
+      }
+      .char-correct {
+        color: var(--cyan);
+      }
+      .char-wrong {
+        color: var(--pink);
+        background: rgba(244, 63, 94, 0.15);
+        border-radius: 2px;
+      }
+      .char-pending {
+        color: #4b5566;
+      }
+      .char-current {
+        color: var(--white);
+        background: var(--violet);
+        border-radius: 2px;
+      }
+      .status-line {
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--dim);
+        min-height: 18px;
+      }
+      .status-line.win {
+        color: var(--cyan);
+        font-family: "Orbitron", sans-serif;
+        letter-spacing: 1px;
+      }
+      .status-line.lose {
+        color: var(--pink);
+        font-family: "Orbitron", sans-serif;
+        letter-spacing: 1px;
+      }
+      #hiddenInput {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      /* ---------- GARAGE ---------- */
+      .car-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .car-card {
+        background: var(--asphalt-3);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+        position: relative;
+      }
+      .car-card.selected {
+        border-color: var(--cyan);
+        box-shadow: 0 0 0 1px var(--cyan) inset;
+      }
+      .car-card .emoji {
+        font-size: 34px;
+      }
+      .car-card h3 {
+        font-family: "Orbitron", sans-serif;
+        font-size: 13px;
+        margin: 8px 0 4px;
+      }
+      .car-card p {
+        font-size: 11px;
+        color: var(--dim);
+        margin: 0 0 10px;
+        line-height: 1.5;
+      }
+      .stat-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        color: var(--dim);
+        margin-bottom: 3px;
+      }
+      .stat-bar .track {
+        flex: 1;
+        height: 4px;
+        background: var(--line);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .stat-bar .fill {
+        height: 100%;
+        background: var(--cyan);
+      }
+      .lock-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 10px;
+        background: var(--asphalt);
+        border: 1px solid var(--line);
+        color: var(--dim);
+        padding: 3px 8px;
+        border-radius: 999px;
+      }
+      .lock-badge.pro {
+        color: var(--amber);
+        border-color: var(--amber);
+      }
+
+      /* ---------- SETTINGS ---------- */
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 180px;
+        flex: 1;
+      }
+      .field label {
+        font-size: 11px;
+        letter-spacing: 1px;
+        color: var(--dim);
+        text-transform: uppercase;
+        font-family: "Orbitron", sans-serif;
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--cyan);
+      }
+      .range-val {
+        font-size: 12px;
+        color: var(--cyan);
+      }
+      .diff-picker {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .diff-btn {
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--asphalt-3);
+        color: var(--fog);
+        cursor: pointer;
+        font-family: "Orbitron", sans-serif;
+        font-size: 11px;
+        letter-spacing: 1px;
+      }
+      .diff-btn.active {
+        border-color: var(--cyan);
+        color: var(--cyan);
+        background: rgba(34, 211, 238, 0.08);
+      }
+
+      /* ---------- MULTIPLAYER ---------- */
+      .room-code {
+        font-family: "Orbitron", sans-serif;
+        font-size: 32px;
+        letter-spacing: 8px;
+        color: var(--cyan);
+      }
+      .player-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .player-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--asphalt-3);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+      .player-row .host-tag {
+        color: var(--amber);
+        font-size: 10px;
+      }
+
+      /* ---------- PROFILE ---------- */
+      .xp-bar {
+        height: 10px;
+        background: var(--asphalt-3);
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .xp-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--violet), var(--cyan));
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .stat-tile {
+        background: var(--asphalt-3);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px;
+      }
+      .stat-tile .v {
+        font-family: "Orbitron", sans-serif;
+        font-size: 20px;
+        color: var(--white);
+      }
+      .stat-tile .l {
+        font-size: 10px;
+        color: var(--dim);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .history-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--line);
+        color: var(--fog);
+      }
+      .history-row:last-child {
+        border-bottom: none;
+      }
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .badge {
+        font-size: 11px;
+        background: var(--asphalt-3);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 12px;
+        color: var(--dim);
+      }
+      .badge.earned {
+        color: var(--amber);
+        border-color: var(--amber);
+      }
+
+      /* ---------- MODALS ---------- */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 7, 11, 0.75);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        padding: 16px;
+      }
+      .modal-overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--asphalt-2);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 560px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .modal-close {
+        float: right;
+        background: none;
+        border: none;
+        color: var(--dim);
+        font-size: 18px;
+        cursor: pointer;
+      }
+      .plan-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 16px 0;
+      }
+      .plan-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+      }
+      .plan-card.featured {
+        border-color: var(--amber);
+        background: rgba(251, 191, 36, 0.06);
+      }
+      .plan-card .price {
+        font-family: "Orbitron", sans-serif;
+        font-size: 26px;
+        color: var(--white);
+        margin: 8px 0;
+      }
+      .plan-card .price span {
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 14px 0;
+        font-size: 12px;
+        color: var(--fog);
+      }
+      .feature-list li {
+        padding: 5px 0;
+      }
+      .feature-list li::before {
+        content: "✓ ";
+        color: var(--cyan);
+      }
+      .checkout-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .checkout-form input {
+        width: 100%;
+      }
+
+      .toast-stack {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 60;
+      }
+      .toast {
+        background: var(--asphalt-2);
+        border: 1px solid var(--cyan);
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 12px;
+        color: var(--white);
+        animation: slidein 0.25s ease;
+      }
+      @keyframes slidein {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .lane .stripes,
+        .vehicle {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+      @media (max-width: 640px) {
+        .plan-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <header class="top">
+        <div class="brand">
+          <p class="eyebrow">Keyboard Circuit</p>
+          <h1>REDLINE</h1>
+        </div>
+        <div class="headstats">
+          <div class="chip level">LVL <b id="hLevel">1</b></div>
+          <div class="chip coins">◆ <b id="hCoins">0</b></div>
+          <button class="pro-btn" id="proBtn">Upgrade to Pro</button>
+        </div>
+      </header>
+
+      <nav class="tabs">
+        <button class="tab-btn active" data-tab="race">Race</button>
+        <button class="tab-btn" data-tab="garage">Garage</button>
+        <button class="tab-btn" data-tab="multiplayer">Multiplayer</button>
+        <button class="tab-btn" data-tab="profile">Profile</button>
+      </nav>
+
+      <!-- ===================== RACE ===================== -->
+      <section class="panel active" id="panel-race">
+        <div class="hud">
+          <div class="gauge">
+            <div class="gauge-label">WPM</div>
+            <div class="gauge-value" id="wpmVal">0</div>
+          </div>
+          <div class="gauge">
+            <div class="gauge-label">Accuracy</div>
+            <div class="gauge-value" id="accVal">100%</div>
+          </div>
+          <div class="gauge">
+            <div class="gauge-label">Combo</div>
+            <div class="gauge-value" id="comboVal">0</div>
+          </div>
+          <div class="gauge">
+            <div class="gauge-label">Setback</div>
+            <div class="gauge-value" id="penVal">0</div>
+          </div>
+        </div>
+
+        <div class="track-wrap" id="trackWrap"></div>
+
+        <div class="text-panel">
+          <div id="textDisplay"></div>
+          <div class="status-line" id="statusLine">
+            Pick your settings below, then start typing to launch the race.
+          </div>
+        </div>
+        <input
+          id="hiddenInput"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+
+        <div class="controls">
+          <button class="primary" id="restartBtn">New Race</button>
+          <span class="hint" id="modeHint"
+            >Solo vs AI · Circuit Race · Pro difficulty</span
+          >
+        </div>
+
+        <div class="card" style="margin-top: 16px">
+          <h2>Race Setup</h2>
+          <div class="row">
+            <div class="field">
+              <label>Race mode</label>
+              <select id="raceMode">
+                <option value="words">Word count</option>
+                <option value="time">Time attack</option>
+              </select>
+            </div>
+            <div class="field" id="wordCountField">
+              <label>Distance</label>
+              <select id="wordCount">
+                <option value="25">Sprint · 25 words</option>
+                <option value="55" selected>Circuit · 55 words</option>
+                <option value="90">Endurance · 90 words</option>
+              </select>
+            </div>
+            <div class="field" id="timeField" style="display: none">
+              <label>Duration</label>
+              <select id="timeSeconds">
+                <option value="30">30 seconds</option>
+                <option value="60" selected>60 seconds</option>
+                <option value="120">120 seconds</option>
+              </select>
+            </div>
+          </div>
+          <div class="row" style="margin-top: 14px">
+            <div class="field">
+              <label>Difficulty</label>
+              <div class="diff-picker" id="diffPicker">
+                <button class="diff-btn" data-diff="rookie">Rookie</button>
+                <button class="diff-btn active" data-diff="pro">Pro</button>
+                <button class="diff-btn" data-diff="legend">Legend</button>
+                <button class="diff-btn" data-diff="custom">Custom</button>
+              </div>
+            </div>
+          </div>
+          <div
+            class="row"
+            id="customRow"
+            style="display: none; margin-top: 14px"
+          >
+            <div class="field">
+              <label
+                >Mistake setback:
+                <span class="range-val" id="penaltyOut">5</span> chars</label
+              >
+              <input
+                type="range"
+                min="0"
+                max="15"
+                value="5"
+                id="penaltySlider"
+              />
+            </div>
+            <div class="field">
+              <label
+                >Rival 1 speed:
+                <span class="range-val" id="bot1Out">45</span> wpm</label
+              >
+              <input
+                type="range"
+                min="20"
+                max="100"
+                value="45"
+                id="bot1Slider"
+              />
+            </div>
+            <div class="field">
+              <label
+                >Rival 2 speed:
+                <span class="range-val" id="bot2Out">65</span> wpm</label
+              >
+              <input
+                type="range"
+                min="20"
+                max="100"
+                value="65"
+                id="bot2Slider"
+              />
+            </div>
+          </div>
+          <div class="note">
+            <b>Difficulty note:</b> every mistake sends your car backward by the
+            setback amount — it's not just a typo counter, it costs you real
+            track position.
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== GARAGE ===================== -->
+      <section class="panel" id="panel-garage">
+        <div class="card">
+          <h2>Your Garage</h2>
+          <div class="car-grid" id="carGrid"></div>
+          <div class="note">
+            Unlock cars by leveling up (earned through races) or spending coins.
+            The hypercar is Pro-exclusive.
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== MULTIPLAYER ===================== -->
+      <section class="panel" id="panel-multiplayer">
+        <div class="card">
+          <h2>Race a Friend</h2>
+          <p class="hint" style="margin-bottom: 14px">
+            Local Match: opens a synced room across browser tabs or windows on
+            this device — open the invite link in another tab to test a real
+            two-lane race right now. (Cross-device online play would plug this
+            same room logic into a hosted realtime backend.)
+          </p>
+          <div id="mpLobbyControls" class="row">
+            <button class="primary" id="createRoomBtn">Create Room</button>
+            <input
+              type="text"
+              id="joinCodeInput"
+              placeholder="Enter room code"
+              style="text-transform: uppercase; width: 160px"
+            />
+            <button class="ghost" id="joinRoomBtn">Join Room</button>
+          </div>
+          <div id="mpRoomView" style="display: none; margin-top: 16px">
+            <div class="room-code" id="roomCodeDisplay">----</div>
+            <div class="row" style="margin-top: 8px">
+              <button class="ghost" id="copyInviteBtn">Copy Invite Link</button>
+              <button class="ghost" id="leaveRoomBtn">Leave Room</button>
+            </div>
+            <div class="player-list" id="mpPlayerList"></div>
+            <div class="row" style="margin-top: 14px">
+              <button class="primary" id="mpStartBtn" disabled>
+                Start Race (host only)
+              </button>
+            </div>
+            <div class="hint" id="mpStatusHint" style="margin-top: 8px">
+              Waiting for players to join…
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== PROFILE ===================== -->
+      <section class="panel" id="panel-profile">
+        <div class="card">
+          <h2>Driver Profile</h2>
+          <div class="row" style="align-items: center">
+            <input
+              type="text"
+              id="nameInput"
+              value="Racer"
+              style="max-width: 200px"
+            />
+            <span class="hint"
+              >Level <b id="pLevel">1</b> · <b id="pXp">0</b> /
+              <span id="pXpNext">750</span> XP</span
+            >
+          </div>
+          <div class="xp-bar">
+            <div class="xp-fill" id="xpFill" style="width: 0%"></div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-tile">
+              <div class="v" id="stRaces">0</div>
+              <div class="l">Races</div>
+            </div>
+            <div class="stat-tile">
+              <div class="v" id="stWins">0</div>
+              <div class="l">Wins</div>
+            </div>
+            <div class="stat-tile">
+              <div class="v" id="stBestWpm">0</div>
+              <div class="l">Best WPM</div>
+            </div>
+            <div class="stat-tile">
+              <div class="v" id="stAvgAcc">100%</div>
+              <div class="l">Avg Accuracy</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Achievements</h2>
+          <div class="badges" id="badgeList"></div>
+        </div>
+        <div class="card">
+          <h2>Recent Races</h2>
+          <div id="historyList">
+            <p class="hint">No races yet. Head to the Race tab.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- PRO MODAL -->
+    <div class="modal-overlay" id="proModal">
+      <div class="modal">
+        <button class="modal-close" data-close="proModal">✕</button>
+        <h2
+          style="font-family: &quot;Orbitron&quot;, sans-serif; margin-top: 0"
+        >
+          Go Pro
+        </h2>
+        <p class="hint">
+          Unlock the full garage, Legend+ difficulty, and remove race caps.
+        </p>
+        <div class="plan-grid">
+          <div class="plan-card">
+            <div class="l">Monthly</div>
+            <div class="price">$6<span>/mo</span></div>
+            <button class="ghost" id="choosePlanMonthly">Select</button>
+          </div>
+          <div class="plan-card featured">
+            <div class="l">Yearly</div>
+            <div class="price">$48<span>/yr</span></div>
+            <button class="primary" id="choosePlanYearly">Select</button>
+          </div>
+        </div>
+        <ul class="feature-list">
+          <li>All 5 cars, including the Nullpoint X1 hypercar</li>
+          <li>Legend+ and fully custom difficulty tuning</li>
+          <li>Unlimited multiplayer rooms</li>
+          <li>Full race history and stat export</li>
+        </ul>
+        <div id="checkoutArea"></div>
+        <div class="note">
+          This is a portfolio demo checkout — no real card is charged. A
+          production build would swap this for Stripe Checkout on a real
+          backend.
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT MODAL -->
+    <div class="modal-overlay" id="resultModal">
+      <div class="modal">
+        <button class="modal-close" data-close="resultModal">✕</button>
+        <h2
+          style="font-family: &quot;Orbitron&quot;, sans-serif; margin-top: 0"
+          id="resultTitle"
+        >
+          Race Complete
+        </h2>
+        <div id="resultBody"></div>
+        <div class="row" style="margin-top: 16px">
+          <button class="primary" id="resultRestartBtn">Race Again</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <script>
+      (function () {
+        /* ============================================================
+     DATA
+  ============================================================ */
+        const WORD_POOL = [
+          "throttle",
+          "gearbox",
+          "asphalt",
+          "nitro",
+          "chrome",
+          "exhaust",
+          "clutch",
+          "redline",
+          "drift",
+          "piston",
+          "circuit",
+          "apex",
+          "tarmac",
+          "engine",
+          "turbo",
+          "brake",
+          "spark",
+          "chassis",
+          "fender",
+          "ignition",
+          "horsepower",
+          "rev",
+          "skid",
+          "lap",
+          "pitstop",
+          "downshift",
+          "overtake",
+          "checkered",
+          "velocity",
+          "traction",
+          "cylinder",
+          "dashboard",
+          "headlight",
+          "carbon",
+          "suspension",
+          "cockpit",
+          "racetrack",
+          "speedway",
+          "slipstream",
+          "handbrake",
+          "tailwind",
+          "momentum",
+          "adrenaline",
+          "finish",
+          "sprint",
+          "surge",
+          "glide",
+          "roar",
+          "blaze",
+          "streak",
+          "dash",
+          "bolt",
+          "zoom",
+          "charge",
+          "rocket",
+          "flash",
+          "grip",
+          "curve",
+          "straightaway",
+          "hairpin",
+          "paddock",
+          "garage",
+          "fuel",
+          "tire",
+          "windshield",
+          "mirror",
+          "signal",
+          "lane",
+          "merge",
+          "accelerate",
+          "cruise",
+          "idle",
+          "stall",
+          "backfire",
+          "supercharge",
+          "boost",
+          "warp",
+          "drive",
+          "race",
+          "ride",
+          "wheel",
+        ];
+
+        const CARS = [
+          {
+            id: "bike",
+            name: "Kestrel 250",
+            emoji: "🏍️",
+            speed: 60,
+            accel: 90,
+            handling: 80,
+            unlock: { type: "default" },
+            desc: "Balanced starter bike. Nimble, no drama.",
+          },
+          {
+            id: "hatch",
+            name: "Volt Hatch",
+            emoji: "🚗",
+            speed: 68,
+            accel: 75,
+            handling: 70,
+            unlock: { type: "level", value: 2 },
+            desc: "Peppy city runner with a quick first gear.",
+          },
+          {
+            id: "muscle",
+            name: "Ember GT",
+            emoji: "🚙",
+            speed: 74,
+            accel: 60,
+            handling: 65,
+            unlock: { type: "coins", value: 400 },
+            desc: "Heavy hitter that rewards long combo streaks.",
+          },
+          {
+            id: "super",
+            name: "Vantablack SV",
+            emoji: "🏎️",
+            speed: 85,
+            accel: 82,
+            handling: 88,
+            unlock: { type: "level", value: 6 },
+            desc: "Track-tuned supercar for serious racers.",
+          },
+          {
+            id: "hyper",
+            name: "Nullpoint X1",
+            emoji: "🚀",
+            speed: 98,
+            accel: 95,
+            handling: 90,
+            unlock: { type: "pro" },
+            desc: "Pro-only hypercar. Absurd top speed.",
+          },
+        ];
+
+        const DIFFICULTIES = {
+          rookie: { bots: [30, 42], penalty: 2, label: "Rookie" },
+          pro: { bots: [45, 65], penalty: 5, label: "Pro" },
+          legend: { bots: [60, 85], penalty: 9, label: "Legend" },
+          custom: { bots: [45, 65], penalty: 5, label: "Custom" },
+        };
+
+        const ACHIEVEMENTS = [
+          {
+            id: "first_race",
+            label: "First Lap",
+            test: (p) => p.racesPlayed >= 1,
+          },
+          { id: "first_win", label: "First Win", test: (p) => p.racesWon >= 1 },
+          { id: "speed_60", label: "60+ WPM", test: (p) => p.bestWpm >= 60 },
+          { id: "speed_90", label: "90+ WPM", test: (p) => p.bestWpm >= 90 },
+          {
+            id: "perfect",
+            label: "Perfectionist",
+            test: (p, last) => last && last.acc === 100,
+          },
+          {
+            id: "combo_20",
+            label: "Combo x20",
+            test: (p, last) => last && last.maxCombo >= 20,
+          },
+          {
+            id: "ten_races",
+            label: "Road Warrior",
+            test: (p) => p.racesPlayed >= 10,
+          },
+          { id: "level5", label: "Level 5", test: (p) => p.level >= 5 },
+        ];
+
+        /* ============================================================
+     STATE / PERSISTENCE
+  ============================================================ */
+        const PROFILE_KEY = "redline_profile_v1";
+        const SETTINGS_KEY = "redline_settings_v1";
+
+        function defaultProfile() {
+          return {
+            name: "Racer",
+            xp: 0,
+            level: 1,
+            coins: 0,
+            unlockedCars: ["bike"],
+            selectedCar: "bike",
+            bestWpm: 0,
+            racesPlayed: 0,
+            racesWon: 0,
+            accSum: 0,
+            history: [],
+            achievements: [],
+            isPro: false,
+          };
+        }
+        function defaultSettings() {
+          return {
+            raceMode: "words",
+            wordCount: 55,
+            timeSeconds: 60,
+            difficulty: "pro",
+            customPenalty: 5,
+            customBot1: 45,
+            customBot2: 65,
+          };
+        }
+        function loadProfile() {
+          try {
+            return {
+              ...defaultProfile(),
+              ...JSON.parse(localStorage.getItem(PROFILE_KEY)),
+            };
+          } catch (e) {
+            return defaultProfile();
+          }
+        }
+        function saveProfile() {
+          localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+          renderHeader();
+        }
+        function loadSettings() {
+          try {
+            return {
+              ...defaultSettings(),
+              ...JSON.parse(localStorage.getItem(SETTINGS_KEY)),
+            };
+          } catch (e) {
+            return defaultSettings();
+          }
+        }
+        function saveSettings() {
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        }
+
+        let profile = loadProfile();
+        let settings = loadSettings();
+
+        function xpForLevel(l) {
+          return l * 750;
+        }
+        function recalcLevel() {
+          let lvl = 1;
+          let remaining = profile.xp;
+          while (remaining >= xpForLevel(lvl)) {
+            remaining -= xpForLevel(lvl);
+            lvl++;
+          }
+          profile.level = lvl;
+        }
+
+        function toast(msg) {
+          const stack = document.getElementById("toastStack");
+          const el = document.createElement("div");
+          el.className = "toast";
+          el.textContent = msg;
+          stack.appendChild(el);
+          setTimeout(() => el.remove(), 3200);
+        }
+
+        /* ============================================================
+     TABS
+  ============================================================ */
+        document.querySelectorAll(".tab-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".tab-btn")
+              .forEach((b) => b.classList.remove("active"));
+            document
+              .querySelectorAll(".panel")
+              .forEach((p) => p.classList.remove("active"));
+            btn.classList.add("active");
+            document
+              .getElementById("panel-" + btn.dataset.tab)
+              .classList.add("active");
+            if (btn.dataset.tab === "garage") renderGarage();
+            if (btn.dataset.tab === "profile") renderProfile();
+          });
+        });
+
+        /* ============================================================
+     MODALS
+  ============================================================ */
+        function openModal(id) {
+          document.getElementById(id).classList.add("open");
+        }
+        function closeModal(id) {
+          document.getElementById(id).classList.remove("open");
+        }
+        document
+          .querySelectorAll("[data-close]")
+          .forEach((b) =>
+            b.addEventListener("click", () => closeModal(b.dataset.close)),
+          );
+        document.querySelectorAll(".modal-overlay").forEach((o) =>
+          o.addEventListener("click", (e) => {
+            if (e.target === o) o.classList.remove("open");
+          }),
+        );
+
+        document.getElementById("proBtn").addEventListener("click", () => {
+          if (profile.isPro) {
+            toast("You are already Pro. Thanks for the support!");
+            return;
+          }
+          openModal("proModal");
+        });
+
+        function renderCheckoutForm(plan, price) {
+          const area = document.getElementById("checkoutArea");
+          area.innerHTML = `
+      <div class="checkout-form">
+        <input type="text" placeholder="Card number · 4242 4242 4242 4242" id="ccNum">
+        <div class="row">
+          <input type="text" placeholder="MM/YY" id="ccExp" style="flex:1">
+          <input type="text" placeholder="CVC" id="ccCvc" style="flex:1">
+        </div>
+        <button class="primary" id="confirmPayBtn">Confirm ${plan} · ${price}</button>
+      </div>`;
+          document
+            .getElementById("confirmPayBtn")
+            .addEventListener("click", () => {
+              profile.isPro = true;
+              saveProfile();
+              closeModal("proModal");
+              toast("Welcome to Pro (demo mode — no real charge).");
+              renderGarage();
+              updateDifficultyLocks();
+            });
+        }
+        document
+          .getElementById("choosePlanMonthly")
+          .addEventListener("click", () =>
+            renderCheckoutForm("Monthly", "$6/mo"),
+          );
+        document
+          .getElementById("choosePlanYearly")
+          .addEventListener("click", () =>
+            renderCheckoutForm("Yearly", "$48/yr"),
+          );
+
+        /* ============================================================
+     HEADER
+  ============================================================ */
+        function renderHeader() {
+          document.getElementById("hLevel").textContent = profile.level;
+          document.getElementById("hCoins").textContent = profile.coins;
+          const proBtn = document.getElementById("proBtn");
+          proBtn.textContent = profile.isPro ? "PRO ACTIVE" : "Upgrade to Pro";
+          proBtn.classList.toggle("is-pro", profile.isPro);
+        }
+
+        /* ============================================================
+     GARAGE
+  ============================================================ */
+        function isUnlocked(car) {
+          if (profile.unlockedCars.includes(car.id)) return true;
+          if (car.unlock.type === "default") return true;
+          if (car.unlock.type === "pro") return profile.isPro;
+          if (car.unlock.type === "level")
+            return profile.level >= car.unlock.value;
+          if (car.unlock.type === "coins") return false; // must be purchased explicitly
+          return false;
+        }
+        function unlockRequirementText(car) {
+          if (car.unlock.type === "pro") return "Requires Pro";
+          if (car.unlock.type === "level")
+            return `Unlocks at Lv.${car.unlock.value}`;
+          if (car.unlock.type === "coins") return `${car.unlock.value} coins`;
+          return "";
+        }
+
+        function renderGarage() {
+          const grid = document.getElementById("carGrid");
+          grid.innerHTML = "";
+          CARS.forEach((car) => {
+            const unlocked = isUnlocked(car);
+            const selected = profile.selectedCar === car.id;
+            const div = document.createElement("div");
+            div.className = "car-card" + (selected ? " selected" : "");
+            div.innerHTML = `
+        ${!unlocked ? `<div class="lock-badge ${car.unlock.type === "pro" ? "pro" : ""}">${unlockRequirementText(car)}</div>` : ""}
+        <div class="emoji">${car.emoji}</div>
+        <h3>${car.name}</h3>
+        <p>${car.desc}</p>
+        <div class="stat-bar">Speed<div class="track"><div class="fill" style="width:${car.speed}%"></div></div></div>
+        <div class="stat-bar">Accel<div class="track"><div class="fill" style="width:${car.accel}%; background:var(--violet)"></div></div></div>
+        <div class="stat-bar">Handling<div class="track"><div class="fill" style="width:${car.handling}%; background:var(--pink)"></div></div></div>
+        <div style="margin-top:10px">
+          ${
+            unlocked
+              ? `<button class="${selected ? "ghost" : "primary"}" data-select="${car.id}" ${selected ? "disabled" : ""}>${selected ? "Equipped" : "Select"}</button>`
+              : car.unlock.type === "coins"
+                ? `<button class="ghost" data-buy="${car.id}">Buy · ${car.unlock.value} coins</button>`
+                : `<button class="ghost" disabled>Locked</button>`
+          }
+        </div>`;
+            grid.appendChild(div);
+          });
+          grid.querySelectorAll("[data-select]").forEach((b) =>
+            b.addEventListener("click", () => {
+              profile.selectedCar = b.dataset.select;
+              saveProfile();
+              renderGarage();
+              toast("Car equipped.");
+            }),
+          );
+          grid.querySelectorAll("[data-buy]").forEach((b) =>
+            b.addEventListener("click", () => {
+              const car = CARS.find((c) => c.id === b.dataset.buy);
+              if (profile.coins >= car.unlock.value) {
+                profile.coins -= car.unlock.value;
+                profile.unlockedCars.push(car.id);
+                saveProfile();
+                renderGarage();
+                toast(`${car.name} unlocked.`);
+              } else {
+                toast("Not enough coins yet — win more races.");
+              }
+            }),
+          );
+        }
+
+        /* ============================================================
+     SETTINGS PANEL WIRING
+  ============================================================ */
+        const raceModeSel = document.getElementById("raceMode");
+        const wordCountField = document.getElementById("wordCountField");
+        const timeField = document.getElementById("timeField");
+        const wordCountSel = document.getElementById("wordCount");
+        const timeSecondsSel = document.getElementById("timeSeconds");
+        const diffPicker = document.getElementById("diffPicker");
+        const customRow = document.getElementById("customRow");
+        const penaltySlider = document.getElementById("penaltySlider");
+        const bot1Slider = document.getElementById("bot1Slider");
+        const bot2Slider = document.getElementById("bot2Slider");
+
+        function applySettingsToUI() {
+          raceModeSel.value = settings.raceMode;
+          wordCountSel.value = settings.wordCount;
+          timeSecondsSel.value = settings.timeSeconds;
+          wordCountField.style.display =
+            settings.raceMode === "words" ? "" : "none";
+          timeField.style.display = settings.raceMode === "time" ? "" : "none";
+          diffPicker
+            .querySelectorAll(".diff-btn")
+            .forEach((b) =>
+              b.classList.toggle(
+                "active",
+                b.dataset.diff === settings.difficulty,
+              ),
+            );
+          customRow.style.display =
+            settings.difficulty === "custom" ? "flex" : "none";
+          penaltySlider.value = settings.customPenalty;
+          bot1Slider.value = settings.customBot1;
+          bot2Slider.value = settings.customBot2;
+          document.getElementById("penaltyOut").textContent =
+            settings.customPenalty;
+          document.getElementById("bot1Out").textContent = settings.customBot1;
+          document.getElementById("bot2Out").textContent = settings.customBot2;
+          updateModeHint();
+        }
+        function updateModeHint() {
+          const d = DIFFICULTIES[settings.difficulty];
+          const dist =
+            settings.raceMode === "words"
+              ? `${settings.wordCount} words`
+              : `${settings.timeSeconds}s time attack`;
+          document.getElementById("modeHint").textContent =
+            `Solo vs AI · ${dist} · ${d.label} difficulty`;
+        }
+        function updateDifficultyLocks() {
+          const legendBtn = diffPicker.querySelector('[data-diff="legend"]');
+          // Legend stays available to everyone; kept simple for demo. Pro gate example: could restrict here.
+        }
+
+        raceModeSel.addEventListener("change", () => {
+          settings.raceMode = raceModeSel.value;
+          saveSettings();
+          applySettingsToUI();
+        });
+        wordCountSel.addEventListener("change", () => {
+          settings.wordCount = parseInt(wordCountSel.value);
+          saveSettings();
+          updateModeHint();
+        });
+        timeSecondsSel.addEventListener("change", () => {
+          settings.timeSeconds = parseInt(timeSecondsSel.value);
+          saveSettings();
+          updateModeHint();
+        });
+        diffPicker.querySelectorAll(".diff-btn").forEach((b) =>
+          b.addEventListener("click", () => {
+            settings.difficulty = b.dataset.diff;
+            saveSettings();
+            applySettingsToUI();
+          }),
+        );
+        penaltySlider.addEventListener("input", () => {
+          settings.customPenalty = parseInt(penaltySlider.value);
+          document.getElementById("penaltyOut").textContent =
+            settings.customPenalty;
+          saveSettings();
+        });
+        bot1Slider.addEventListener("input", () => {
+          settings.customBot1 = parseInt(bot1Slider.value);
+          document.getElementById("bot1Out").textContent = settings.customBot1;
+          saveSettings();
+        });
+        bot2Slider.addEventListener("input", () => {
+          settings.customBot2 = parseInt(bot2Slider.value);
+          document.getElementById("bot2Out").textContent = settings.customBot2;
+          saveSettings();
+        });
+
+        function currentDifficultyConfig() {
+          if (settings.difficulty === "custom") {
+            return {
+              bots: [settings.customBot1, settings.customBot2],
+              penalty: settings.customPenalty,
+              label: "Custom",
+            };
+          }
+          return DIFFICULTIES[settings.difficulty];
+        }
+
+        /* ============================================================
+     RACE ENGINE
+     Supports: solo vs AI bots, or multiplayer lanes (dynamic count)
+  ============================================================ */
+        let targetText = "";
+        let typedChars = 0;
+        let typedState = [];
+        let correctChars = 0;
+        let penaltyChars = 0;
+        let mistakes = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let startTime = null;
+        let raceActive = false;
+        let raceOver = false;
+        let animFrame = null;
+        let lanes = []; // {key, label, kind:'you'|'bot'|'peer', speedWpm(optional), el, vehicleEl}
+        let raceMode = "solo"; // 'solo' | 'multiplayer'
+
+        const trackWrap = document.getElementById("trackWrap");
+        const textDisplay = document.getElementById("textDisplay");
+        const statusLine = document.getElementById("statusLine");
+        const hiddenInput = document.getElementById("hiddenInput");
+
+        function genText(n) {
+          const words = [];
+          for (let i = 0; i < n; i++)
+            words.push(WORD_POOL[Math.floor(Math.random() * WORD_POOL.length)]);
+          return words.join(" ");
+        }
+
+        function selectedCarData() {
+          return CARS.find((c) => c.id === profile.selectedCar) || CARS[0];
+        }
+
+        function buildLanesSolo() {
+          const diff = currentDifficultyConfig();
+          lanes = [
+            { key: "you", label: profile.name + " (You)", kind: "you" },
+            {
+              key: "bot1",
+              label: `Rival · ${diff.bots[0]}wpm`,
+              kind: "bot",
+              speedWpm: diff.bots[0],
+            },
+            {
+              key: "bot2",
+              label: `Ghost · ${diff.bots[1]}wpm`,
+              kind: "bot",
+              speedWpm: diff.bots[1],
+            },
+          ];
+        }
+
+        function renderLanes() {
+          trackWrap.innerHTML = "";
+          const car = selectedCarData();
+          lanes.forEach((lane) => {
+            const laneEl = document.createElement("div");
+            laneEl.className = "lane";
+            const emoji =
+              lane.kind === "you"
+                ? car.emoji
+                : lane.kind === "peer"
+                  ? "🚗"
+                  : "🚙";
+            laneEl.innerHTML = `
+        <div class="stripes"></div>
+        <div class="vehicle ${lane.kind === "you" ? "you" : ""}" style="left:0%">
+          <span class="tag">${lane.label}</span>${emoji}
+        </div>
+        <div class="finish"></div>`;
+            trackWrap.appendChild(laneEl);
+            lane.el = laneEl;
+            lane.vehicleEl = laneEl.querySelector(".vehicle");
+          });
+        }
+
+        function renderText() {
+          let html = "";
+          for (let i = 0; i < targetText.length; i++) {
+            const ch = targetText[i];
+            let cls = "char-pending";
+            if (i < typedChars)
+              cls = typedState[i] === "ok" ? "char-correct" : "char-wrong";
+            else if (i === typedChars) cls = "char-current";
+            html += `<span class="${cls}">${ch === " " ? "&nbsp;" : ch}</span>`;
+          }
+          textDisplay.innerHTML = html;
+        }
+
+        function resetRace() {
+          const len = settings.raceMode === "words" ? settings.wordCount : 60; // time mode: generous pool, race ends by timer
+          targetText = genText(
+            settings.raceMode === "time" ? Math.max(len, 120) : len,
+          );
+          typedChars = 0;
+          correctChars = 0;
+          penaltyChars = 0;
+          mistakes = 0;
+          combo = 0;
+          maxCombo = 0;
+          startTime = null;
+          raceActive = false;
+          raceOver = false;
+          typedState = new Array(targetText.length).fill(null);
+          hiddenInput.value = "";
+          document.getElementById("wpmVal").textContent = "0";
+          document.getElementById("accVal").textContent = "100%";
+          document.getElementById("comboVal").textContent = "0";
+          document.getElementById("penVal").textContent = "0";
+          statusLine.className = "status-line";
+          statusLine.textContent =
+            settings.raceMode === "time"
+              ? `Type for ${settings.timeSeconds}s — cover as much track as you can.`
+              : "Click the track, then just start typing. Backspace fixes mistakes.";
+
+          if (raceMode === "solo") buildLanesSolo();
+          renderLanes();
+          lanes.forEach((l) => l.el.classList.remove("moving"));
+          trackWrap.classList.remove("boosting");
+          renderText();
+          cancelAnimationFrame(animFrame);
+        }
+
+        function updateGauges() {
+          if (!startTime) return 0;
+          const elapsedMin = (Date.now() - startTime) / 60000;
+          const wpm =
+            elapsedMin > 0 ? Math.round(correctChars / 5 / elapsedMin) : 0;
+          const totalTyped = correctChars + mistakes;
+          const acc =
+            totalTyped > 0
+              ? Math.round((correctChars / totalTyped) * 100)
+              : 100;
+          document.getElementById("wpmVal").textContent = wpm;
+          document.getElementById("accVal").textContent = acc + "%";
+          document.getElementById("comboVal").textContent = combo;
+          document.getElementById("penVal").textContent = penaltyChars;
+          return { wpm, acc };
+        }
+
+        function playerProgressPct() {
+          const effective = Math.max(0, correctChars - penaltyChars);
+          return Math.min(96, (effective / targetText.length) * 100);
+        }
+
+        function animateSolo() {
+          if (!raceActive || raceOver) return;
+          const elapsedMs = Date.now() - startTime;
+          const elapsedMin = elapsedMs / 60000;
+
+          // time-attack mode: end by timer
+          if (
+            settings.raceMode === "time" &&
+            elapsedMs / 1000 >= settings.timeSeconds
+          ) {
+            finishSolo(null); // ranked by distance
+            return;
+          }
+
+          lanes.forEach((lane) => {
+            if (lane.kind === "bot") {
+              const pct = Math.min(
+                100,
+                ((lane.speedWpm * 5 * elapsedMin) / targetText.length) * 100,
+              );
+              lane.vehicleEl.style.left = Math.min(pct, 96) + "%";
+              lane._pct = pct;
+              if (settings.raceMode === "words" && pct >= 100 && !raceOver) {
+                finishSolo(lane.key);
+              }
+            }
+          });
+
+          animFrame = requestAnimationFrame(animateSolo);
+        }
+
+        function finishSolo(loserTriggerKey) {
+          raceOver = true;
+          raceActive = false;
+          lanes.forEach((l) => l.el.classList.remove("moving"));
+          trackWrap.classList.remove("boosting");
+          cancelAnimationFrame(animFrame);
+          const { wpm, acc } = updateGauges();
+
+          let placement = 1;
+          const yourPct = playerProgressPct();
+          lanes.forEach((l) => {
+            if (l.kind === "bot" && (l._pct || 0) > yourPct) placement++;
+          });
+          const won = placement === 1;
+
+          recordRaceResult({
+            wpm,
+            acc,
+            maxCombo,
+            won,
+            mode: settings.raceMode,
+          });
+
+          if (won) {
+            statusLine.className = "status-line win";
+            statusLine.textContent = `🏁 YOU WIN! ${wpm} WPM · ${acc}% accuracy · max combo ${maxCombo}.`;
+          } else {
+            statusLine.className = "status-line lose";
+            statusLine.textContent = `Race over — you placed #${placement}. Pace: ${wpm} WPM.`;
+          }
+          showResultModal(won, wpm, acc, placement);
+        }
+
+        function recordRaceResult({ wpm, acc, maxCombo, won, mode }) {
+          profile.racesPlayed++;
+          if (won) profile.racesWon++;
+          profile.accSum += acc;
+          if (wpm > profile.bestWpm) profile.bestWpm = wpm;
+          const coinsEarned = Math.round(wpm / 2) + (won ? 50 : 10);
+          profile.coins += coinsEarned;
+          profile.xp += Math.round(wpm * 3 + acc);
+          recalcLevel();
+          profile.history.unshift({
+            date: new Date().toLocaleDateString(),
+            wpm,
+            acc,
+            maxCombo,
+            won,
+            mode,
+          });
+          profile.history = profile.history.slice(0, 12);
+
+          const lastResult = { acc, maxCombo };
+          ACHIEVEMENTS.forEach((a) => {
+            if (
+              !profile.achievements.includes(a.id) &&
+              a.test(profile, lastResult)
+            ) {
+              profile.achievements.push(a.id);
+              toast(`Achievement unlocked: ${a.label}`);
+            }
+          });
+
+          saveProfile();
+          return coinsEarned;
+        }
+
+        function showResultModal(won, wpm, acc, placement) {
+          document.getElementById("resultTitle").textContent = won
+            ? "🏁 Victory"
+            : "Race Complete";
+          document.getElementById("resultBody").innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-tile"><div class="v">${wpm}</div><div class="l">WPM</div></div>
+        <div class="stat-tile"><div class="v">${acc}%</div><div class="l">Accuracy</div></div>
+        <div class="stat-tile"><div class="v">${maxCombo}</div><div class="l">Max Combo</div></div>
+        <div class="stat-tile"><div class="v">#${placement}</div><div class="l">Placement</div></div>
+      </div>`;
+          openModal("resultModal");
+        }
+        document
+          .getElementById("resultRestartBtn")
+          .addEventListener("click", () => {
+            closeModal("resultModal");
+            resetRace();
+          });
+
+        function handleInput() {
+          if (raceOver) return;
+          const val = hiddenInput.value;
+
+          if (!raceActive && val.length > 0) {
+            raceActive = true;
+            startTime = Date.now();
+            lanes.forEach((l) => l.el.classList.add("moving"));
+            statusLine.className = "status-line";
+            statusLine.textContent =
+              "GO! Keep typing — mistakes send you backward.";
+            if (raceMode === "solo") animateSolo();
+          }
+
+          if (val.length < typedChars) {
+            for (let i = val.length; i < typedChars; i++) {
+              if (typedState[i] === "ok") correctChars--;
+              typedState[i] = null;
+            }
+            typedChars = val.length;
+            combo = 0;
+            renderText();
+            updateGauges();
+            return;
+          }
+
+          const diff = currentDifficultyConfig();
+          for (let i = typedChars; i < val.length; i++) {
+            const typedCh = val[i];
+            const targetCh = targetText[i];
+            if (typedCh === targetCh) {
+              typedState[i] = "ok";
+              correctChars++;
+              combo++;
+              if (combo > maxCombo) maxCombo = combo;
+            } else {
+              typedState[i] = "bad";
+              mistakes++;
+              combo = 0;
+              penaltyChars += diff.penalty;
+            }
+          }
+          typedChars = val.length;
+
+          const { wpm } = updateGauges();
+          trackWrap.classList.toggle("boosting", wpm >= 55);
+
+          const you = lanes.find((l) => l.key === "you");
+          if (you) you.vehicleEl.style.left = playerProgressPct() + "%";
+          if (mpRoom) mpBroadcastProgress();
+
+          renderText();
+
+          if (
+            settings.raceMode === "words" &&
+            typedChars >= targetText.length
+          ) {
+            if (raceMode === "solo") finishSolo("you");
+            else mpFinish();
+          }
+        }
+        hiddenInput.addEventListener("input", handleInput);
+        document
+          .querySelector("#panel-race")
+          .addEventListener("click", () => hiddenInput.focus());
+        document
+          .getElementById("restartBtn")
+          .addEventListener("click", resetRace);
+
+        /* ============================================================
+     MULTIPLAYER (BroadcastChannel — same-device room sync)
+  ============================================================ */
+        let mpChannel = null;
+        let mpRoom = null;
+        let mpIsHost = false;
+        let mpPlayers = {}; // name -> {name, pct, finishedAt}
+        let mpMyName = null;
+
+        function roomCode(len) {
+          const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+          let s = "";
+          for (let i = 0; i < len; i++)
+            s += chars[Math.floor(Math.random() * chars.length)];
+          return s;
+        }
+
+        function mpJoin(code, asHost) {
+          mpRoom = code.toUpperCase();
+          mpIsHost = asHost;
+          mpMyName = profile.name + "#" + Math.floor(Math.random() * 900 + 100);
+          mpChannel = new BroadcastChannel("redline-room-" + mpRoom);
+          mpPlayers = {};
+          mpPlayers[mpMyName] = {
+            name: mpMyName,
+            pct: 0,
+            isHost: mpIsHost,
+            finishedAt: null,
+          };
+
+          mpChannel.onmessage = (ev) => {
+            const msg = ev.data;
+            if (msg.type === "hello") {
+              if (mpIsHost) {
+                mpPlayers[msg.name] = {
+                  name: msg.name,
+                  pct: 0,
+                  isHost: false,
+                  finishedAt: null,
+                };
+                mpBroadcastRoster();
+              }
+            } else if (msg.type === "roster") {
+              mpPlayers = msg.players;
+              renderMpLobby();
+            } else if (msg.type === "progress") {
+              if (mpPlayers[msg.name]) mpPlayers[msg.name].pct = msg.pct;
+              renderMpTrack();
+            } else if (msg.type === "start") {
+              mpBeginRace(msg.text, msg.startAt, msg.penalty);
+            } else if (msg.type === "finish") {
+              if (mpPlayers[msg.name]) mpPlayers[msg.name].finishedAt = msg.at;
+              renderMpLobby();
+            }
+          };
+
+          if (!mpIsHost)
+            mpChannel.postMessage({ type: "hello", name: mpMyName });
+
+          document.getElementById("mpLobbyControls").style.display = "none";
+          document.getElementById("mpRoomView").style.display = "block";
+          document.getElementById("roomCodeDisplay").textContent = mpRoom;
+          document.getElementById("mpStartBtn").disabled = !mpIsHost;
+          renderMpLobby();
+        }
+
+        function mpBroadcastRoster() {
+          mpChannel.postMessage({ type: "roster", players: mpPlayers });
+          renderMpLobby();
+        }
+
+        function renderMpLobby() {
+          const list = document.getElementById("mpPlayerList");
+          list.innerHTML = "";
+          Object.values(mpPlayers).forEach((p) => {
+            const row = document.createElement("div");
+            row.className = "player-row";
+            row.innerHTML = `<span>${p.name}${p.name === mpMyName ? " (you)" : ""}</span><span class="host-tag">${p.isHost ? "HOST" : ""}</span>`;
+            list.appendChild(row);
+          });
+          const count = Object.keys(mpPlayers).length;
+          document.getElementById("mpStatusHint").textContent =
+            count < 2
+              ? "Waiting for at least one more player…"
+              : `${count} racers ready. ${mpIsHost ? "Start when ready." : "Waiting for host to start."}`;
+          if (mpIsHost)
+            document.getElementById("mpStartBtn").disabled = count < 2;
+        }
+
+        document
+          .getElementById("createRoomBtn")
+          .addEventListener("click", () => mpJoin(roomCode(4), true));
+        document.getElementById("joinRoomBtn").addEventListener("click", () => {
+          const code = document.getElementById("joinCodeInput").value.trim();
+          if (code) mpJoin(code, false);
+        });
+        document
+          .getElementById("copyInviteBtn")
+          .addEventListener("click", () => {
+            const url = location.href.split("?")[0] + "?room=" + mpRoom;
+            navigator.clipboard
+              .writeText(url)
+              .then(() => toast("Invite link copied."));
+          });
+        document
+          .getElementById("leaveRoomBtn")
+          .addEventListener("click", () => {
+            if (mpChannel) mpChannel.close();
+            mpRoom = null;
+            mpChannel = null;
+            document.getElementById("mpLobbyControls").style.display = "flex";
+            document.getElementById("mpRoomView").style.display = "none";
+          });
+
+        document.getElementById("mpStartBtn").addEventListener("click", () => {
+          if (!mpIsHost) return;
+          const len = settings.wordCount;
+          const text = genText(len);
+          const startAt = Date.now() + 3000;
+          const diff = currentDifficultyConfig();
+          mpChannel.postMessage({
+            type: "start",
+            text,
+            startAt,
+            penalty: diff.penalty,
+          });
+          mpBeginRace(text, startAt, diff.penalty);
+        });
+
+        let mpPenalty = 5;
+        function mpBeginRace(text, startAt, penalty) {
+          raceMode = "multiplayer";
+          mpPenalty = penalty;
+          targetText = text;
+          typedChars = 0;
+          correctChars = 0;
+          penaltyChars = 0;
+          mistakes = 0;
+          combo = 0;
+          maxCombo = 0;
+          typedState = new Array(targetText.length).fill(null);
+          hiddenInput.value = "";
+          raceOver = false;
+          raceActive = false;
+
+          lanes = Object.values(mpPlayers).map((p) => ({
+            key: p.name,
+            label: p.name === mpMyName ? profile.name + " (You)" : p.name,
+            kind: p.name === mpMyName ? "you" : "peer",
+          }));
+          renderLanes();
+          renderText();
+
+          document.querySelectorAll('.tab-btn[data-tab="race"]')[0].click();
+          statusLine.className = "status-line";
+
+          const wait = startAt - Date.now();
+          statusLine.textContent = "Race starting…";
+          setTimeout(
+            () => {
+              raceActive = true;
+              startTime = Date.now();
+              lanes.forEach((l) => l.el.classList.add("moving"));
+              statusLine.textContent =
+                "GO! Keep typing — mistakes send you backward.";
+              hiddenInput.focus();
+            },
+            Math.max(0, wait),
+          );
+        }
+
+        function mpBroadcastProgress() {
+          if (!mpChannel) return;
+          mpPlayers[mpMyName].pct = playerProgressPct();
+          mpChannel.postMessage({
+            type: "progress",
+            name: mpMyName,
+            pct: mpPlayers[mpMyName].pct,
+          });
+        }
+        function renderMpTrack() {
+          lanes.forEach((lane) => {
+            if (lane.kind === "peer" && mpPlayers[lane.key]) {
+              lane.vehicleEl.style.left =
+                Math.min(96, mpPlayers[lane.key].pct) + "%";
+            }
+          });
+        }
+        function mpFinish() {
+          raceOver = true;
+          raceActive = false;
+          lanes.forEach((l) => l.el.classList.remove("moving"));
+          const { wpm, acc } = updateGauges();
+          if (mpChannel)
+            mpChannel.postMessage({
+              type: "finish",
+              name: mpMyName,
+              at: Date.now(),
+            });
+          recordRaceResult({
+            wpm,
+            acc,
+            maxCombo,
+            won: true,
+            mode: "multiplayer",
+          });
+          statusLine.className = "status-line win";
+          statusLine.textContent = `🏁 Finished! ${wpm} WPM · ${acc}% accuracy.`;
+          showResultModal(true, wpm, acc, 1);
+        }
+
+        // auto-join if URL has ?room=
+        const urlRoom = new URLSearchParams(location.search).get("room");
+        if (urlRoom) {
+          document.querySelector('.tab-btn[data-tab="multiplayer"]').click();
+          document.getElementById("joinCodeInput").value = urlRoom;
+        }
+
+        /* ============================================================
+     PROFILE PANEL
+  ============================================================ */
+        const nameInput = document.getElementById("nameInput");
+        nameInput.value = profile.name;
+        nameInput.addEventListener("change", () => {
+          profile.name = nameInput.value || "Racer";
+          saveProfile();
+        });
+
+        function renderProfile() {
+          document.getElementById("pLevel").textContent = profile.level;
+          document.getElementById("pXp").textContent =
+            profile.xp -
+            (profile.level > 1
+              ? Array.from({ length: profile.level - 1 }, (_, i) =>
+                  xpForLevel(i + 1),
+                ).reduce((a, b) => a + b, 0)
+              : 0);
+          const xpIntoLevel =
+            profile.xp -
+            Array.from({ length: profile.level - 1 }, (_, i) =>
+              xpForLevel(i + 1),
+            ).reduce((a, b) => a + b, 0);
+          const xpNeeded = xpForLevel(profile.level);
+          document.getElementById("pXpNext").textContent = xpNeeded;
+          document.getElementById("xpFill").style.width =
+            Math.min(100, (xpIntoLevel / xpNeeded) * 100) + "%";
+
+          document.getElementById("stRaces").textContent = profile.racesPlayed;
+          document.getElementById("stWins").textContent = profile.racesWon;
+          document.getElementById("stBestWpm").textContent = profile.bestWpm;
+          document.getElementById("stAvgAcc").textContent = profile.racesPlayed
+            ? Math.round(profile.accSum / profile.racesPlayed) + "%"
+            : "100%";
+
+          const badgeList = document.getElementById("badgeList");
+          badgeList.innerHTML = "";
+          ACHIEVEMENTS.forEach((a) => {
+            const earned = profile.achievements.includes(a.id);
+            const b = document.createElement("div");
+            b.className = "badge" + (earned ? " earned" : "");
+            b.textContent = (earned ? "★ " : "☆ ") + a.label;
+            badgeList.appendChild(b);
+          });
+
+          const historyList = document.getElementById("historyList");
+          if (profile.history.length === 0) {
+            historyList.innerHTML =
+              '<p class="hint">No races yet. Head to the Race tab.</p>';
+          } else {
+            historyList.innerHTML = profile.history
+              .map(
+                (h) =>
+                  `<div class="history-row"><span>${h.date} · ${h.mode}</span><span>${h.wpm} wpm · ${h.acc}% · ${h.won ? "🏆 win" : "finish"}</span></div>`,
+              )
+              .join("");
+          }
+        }
+
+        /* ============================================================
+     INIT
+  ============================================================ */
+        recalcLevel();
+        saveProfile();
+        applySettingsToUI();
+        renderHeader();
+        renderGarage();
+        buildLanesSolo();
+        resetRace();
+        hiddenInput.focus();
+      })();
+    </script>
+  </body>
+</html>

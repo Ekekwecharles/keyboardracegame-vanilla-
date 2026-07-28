@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>REDLINE // Type Racer</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+      :root {
+        --asphalt: #0a0e14;
+        --asphalt-2: #11161f;
+        --violet: #8b5cf6;
+        --cyan: #22d3ee;
+        --pink: #f43f5e;
+        --amber: #fbbf24;
+        --fog: #c7ccd6;
+        --white: #eef1f6;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        background: var(--asphalt);
+        color: var(--white);
+        font-family: "JetBrains Mono", monospace;
+        overflow-x: hidden;
+      }
+
+      #app {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 28px 20px 40px;
+      }
+
+      .eyebrow {
+        font-family: "Orbitron", sans-serif;
+        font-size: 12px;
+        letter-spacing: 5px;
+        color: var(--cyan);
+        text-transform: uppercase;
+        margin: 0 0 4px;
+      }
+
+      h1 {
+        font-family: "Orbitron", sans-serif;
+        font-weight: 900;
+        font-size: clamp(32px, 6vw, 52px);
+        margin: 0 0 6px;
+        letter-spacing: 1px;
+        background: linear-gradient(
+          90deg,
+          var(--white),
+          var(--cyan) 60%,
+          var(--violet)
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .sub {
+        color: var(--fog);
+        font-size: 13px;
+        margin-bottom: 22px;
+      }
+
+      /* HUD */
+      .hud {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .gauge {
+        flex: 1;
+        min-width: 110px;
+        background: var(--asphalt-2);
+        border: 1px solid #1e2531;
+        border-radius: 10px;
+        padding: 10px 14px;
+        position: relative;
+        overflow: hidden;
+      }
+      .gauge::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(139, 92, 246, 0.08),
+          transparent
+        );
+      }
+      .gauge-label {
+        font-family: "Orbitron", sans-serif;
+        font-size: 10px;
+        letter-spacing: 2px;
+        color: #7b8394;
+        text-transform: uppercase;
+        position: relative;
+      }
+      .gauge-value {
+        font-family: "Orbitron", sans-serif;
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--white);
+        position: relative;
+      }
+      #wpmGauge .gauge-value {
+        color: var(--cyan);
+      }
+      #accGauge .gauge-value {
+        color: var(--amber);
+      }
+      #comboGauge .gauge-value {
+        color: var(--pink);
+      }
+
+      /* TRACK */
+      .track-wrap {
+        background: var(--asphalt-2);
+        border: 1px solid #1e2531;
+        border-radius: 14px;
+        padding: 18px 18px 14px;
+        margin-bottom: 18px;
+      }
+
+      .lane {
+        position: relative;
+        height: 46px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        background:
+          repeating-linear-gradient(
+            90deg,
+            #2a3242 0 26px,
+            transparent 26px 52px
+          ),
+          #171d29;
+        background-size:
+          100px 2px,
+          100% 100%;
+        background-position: center;
+        overflow: hidden;
+      }
+      .lane::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: repeating-linear-gradient(
+          90deg,
+          #3b4457 0 18px,
+          transparent 18px 36px
+        );
+        transform: translateY(-50%);
+        animation: dash 0.6s linear infinite;
+      }
+      .lane.moving::after {
+        animation-play-state: running;
+      }
+      .lane:not(.moving)::after {
+        animation-play-state: paused;
+      }
+      @keyframes dash {
+        from {
+          background-position-x: 0;
+        }
+        to {
+          background-position-x: -36px;
+        }
+      }
+
+      .finish {
+        position: absolute;
+        right: 6px;
+        top: 0;
+        bottom: 0;
+        width: 8px;
+        background: repeating-linear-gradient(45deg, #fff 0 4px, #111 4px 8px);
+        border-radius: 3px;
+        opacity: 0.85;
+      }
+
+      .vehicle {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        transform: translate(0, -50%);
+        font-size: 26px;
+        transition:
+          left 0.12s linear,
+          filter 0.15s;
+        filter: drop-shadow(0 0 0px transparent);
+        z-index: 2;
+      }
+      .vehicle .tag {
+        font-family: "Orbitron", sans-serif;
+        font-size: 9px;
+        color: #7b8394;
+        position: absolute;
+        top: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: nowrap;
+      }
+      #playerLane .vehicle {
+        filter: drop-shadow(0 0 6px var(--cyan));
+      }
+      .boosting .vehicle {
+        filter: drop-shadow(0 0 14px var(--cyan))
+          drop-shadow(0 0 4px var(--pink));
+      }
+
+      /* TEXT AREA */
+      .text-panel {
+        background: var(--asphalt-2);
+        border: 1px solid #1e2531;
+        border-radius: 14px;
+        padding: 20px 22px;
+        font-size: 20px;
+        line-height: 1.7;
+        letter-spacing: 0.3px;
+        min-height: 96px;
+        position: relative;
+      }
+
+      #textDisplay span {
+        transition: color 0.05s;
+      }
+      .char-correct {
+        color: var(--cyan);
+      }
+      .char-wrong {
+        color: var(--pink);
+        background: rgba(244, 63, 94, 0.15);
+        border-radius: 2px;
+      }
+      .char-pending {
+        color: #4b5566;
+      }
+      .char-current {
+        color: var(--white);
+        background: var(--violet);
+        border-radius: 2px;
+      }
+
+      .status-line {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #7b8394;
+        min-height: 18px;
+      }
+      .status-line.win {
+        color: var(--cyan);
+        font-family: "Orbitron", sans-serif;
+        letter-spacing: 1px;
+      }
+      .status-line.lose {
+        color: var(--pink);
+        font-family: "Orbitron", sans-serif;
+        letter-spacing: 1px;
+      }
+
+      #hiddenInput {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      select,
+      button {
+        font-family: "Orbitron", sans-serif;
+        font-size: 12px;
+        letter-spacing: 1px;
+        background: var(--asphalt-2);
+        color: var(--white);
+        border: 1px solid #2a3242;
+        border-radius: 8px;
+        padding: 10px 16px;
+        cursor: pointer;
+      }
+      button {
+        background: linear-gradient(90deg, var(--violet), var(--cyan));
+        color: #0a0e14;
+        font-weight: 700;
+        border: none;
+      }
+      button:hover {
+        filter: brightness(1.1);
+      }
+      select:focus,
+      button:focus-visible {
+        outline: 2px solid var(--cyan);
+        outline-offset: 2px;
+      }
+
+      .hint {
+        font-size: 11px;
+        color: #5a6376;
+        margin-top: 6px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .lane::after,
+        .vehicle {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <p class="eyebrow">Keyboard Circuit</p>
+      <h1>REDLINE</h1>
+      <p class="sub">
+        Type accurately. Type fast. Every correct character is throttle.
+      </p>
+
+      <div class="hud">
+        <div class="gauge" id="wpmGauge">
+          <div class="gauge-label">WPM</div>
+          <div class="gauge-value" id="wpmVal">0</div>
+        </div>
+        <div class="gauge" id="accGauge">
+          <div class="gauge-label">Accuracy</div>
+          <div class="gauge-value" id="accVal">100%</div>
+        </div>
+        <div class="gauge" id="comboGauge">
+          <div class="gauge-label">Combo</div>
+          <div class="gauge-value" id="comboVal">0</div>
+        </div>
+      </div>
+
+      <div class="track-wrap" id="trackWrap">
+        <div class="lane" id="playerLane">
+          <div class="vehicle" id="playerVehicle" style="left: 0%">
+            <span class="tag">YOU</span>🏍️
+          </div>
+          <div class="finish"></div>
+        </div>
+        <div class="lane" id="botLane1">
+          <div class="vehicle" id="botVehicle1" style="left: 0%">
+            <span class="tag">RIVAL · 45wpm</span>🏎️
+          </div>
+          <div class="finish"></div>
+        </div>
+        <div class="lane" id="botLane2">
+          <div class="vehicle" id="botVehicle2" style="left: 0%">
+            <span class="tag">GHOST · 70wpm</span>🚗
+          </div>
+          <div class="finish"></div>
+        </div>
+      </div>
+
+      <div class="text-panel">
+        <div id="textDisplay"></div>
+        <div class="status-line" id="statusLine">
+          Pick a difficulty and start typing to launch the race.
+        </div>
+      </div>
+      <input
+        id="hiddenInput"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+
+      <div class="controls">
+        <select id="difficulty">
+          <option value="easy">Short Sprint (~30 words)</option>
+          <option value="mid" selected>Circuit Race (~55 words)</option>
+          <option value="hard">Endurance Run (~85 words)</option>
+        </select>
+        <button id="restartBtn">New Race</button>
+        <span class="hint"
+          >Click the track, then just start typing. Backspace fixes
+          mistakes.</span
+        >
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const WORD_POOL = [
+          "throttle",
+          "gearbox",
+          "asphalt",
+          "nitro",
+          "chrome",
+          "exhaust",
+          "clutch",
+          "redline",
+          "drift",
+          "piston",
+          "circuit",
+          "apex",
+          "tarmac",
+          "engine",
+          "turbo",
+          "brake",
+          "spark",
+          "chassis",
+          "fender",
+          "ignition",
+          "horsepower",
+          "rev",
+          "skid",
+          "lap",
+          "pitstop",
+          "downshift",
+          "overtake",
+          "checkered",
+          "velocity",
+          "traction",
+          "cylinder",
+          "dashboard",
+          "headlight",
+          "carbon",
+          "suspension",
+          "cockpit",
+          "racetrack",
+          "speedway",
+          "slipstream",
+          "handbrake",
+          "tailwind",
+          "momentum",
+          "adrenaline",
+          "finish",
+          "sprint",
+          "surge",
+          "glide",
+          "roar",
+          "blaze",
+          "streak",
+          "dash",
+          "bolt",
+          "zoom",
+          "charge",
+          "rocket",
+          "flash",
+          "surge",
+          "grip",
+          "curve",
+          "straightaway",
+          "hairpin",
+          "paddock",
+          "garage",
+          "fuel",
+          "tire",
+          "windshield",
+          "mirror",
+          "signal",
+          "lane",
+          "merge",
+          "accelerate",
+          "cruise",
+          "idle",
+          "stall",
+          "backfire",
+          "supercharge",
+          "boost",
+          "warp",
+          "drive",
+          "race",
+          "ride",
+          "wheel",
+        ];
+
+        const LENGTHS = { easy: 30, mid: 55, hard: 85 };
+
+        let targetText = "";
+        let typedChars = 0;
+        let correctChars = 0;
+        let mistakes = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let startTime = null;
+        let raceActive = false;
+        let raceOver = false;
+        let animFrame = null;
+        const BOT1_WPM = 45;
+        const BOT2_WPM = 70;
+
+        const textDisplay = document.getElementById("textDisplay");
+        const statusLine = document.getElementById("statusLine");
+        const hiddenInput = document.getElementById("hiddenInput");
+        const wpmVal = document.getElementById("wpmVal");
+        const accVal = document.getElementById("accVal");
+        const comboVal = document.getElementById("comboVal");
+        const playerVehicle = document.getElementById("playerVehicle");
+        const botVehicle1 = document.getElementById("botVehicle1");
+        const botVehicle2 = document.getElementById("botVehicle2");
+        const playerLane = document.getElementById("playerLane");
+        const botLane1 = document.getElementById("botLane1");
+        const botLane2 = document.getElementById("botLane2");
+        const trackWrap = document.getElementById("trackWrap");
+        const restartBtn = document.getElementById("restartBtn");
+        const difficultySel = document.getElementById("difficulty");
+
+        function genText(n) {
+          const words = [];
+          for (let i = 0; i < n; i++) {
+            words.push(WORD_POOL[Math.floor(Math.random() * WORD_POOL.length)]);
+          }
+          return words.join(" ");
+        }
+
+        function renderText() {
+          let html = "";
+          for (let i = 0; i < targetText.length; i++) {
+            const ch = targetText[i];
+            let cls = "char-pending";
+            if (i < typedChars) {
+              cls = typedState[i] === "ok" ? "char-correct" : "char-wrong";
+            } else if (i === typedChars) {
+              cls = "char-current";
+            }
+            // const displayCh = ch === " " ? "&nbsp;" : ch;
+            // html += `<span class="${cls}">${displayCh}</span>`;
+            html += `<span class="${cls}">${ch}</span>`;
+          }
+          textDisplay.innerHTML = html;
+        }
+
+        let typedState = [];
+
+        function resetRace() {
+          const len = LENGTHS[difficultySel.value];
+          targetText = genText(len);
+          typedChars = 0;
+          correctChars = 0;
+          mistakes = 0;
+          combo = 0;
+          maxCombo = 0;
+          startTime = null;
+          raceActive = false;
+          raceOver = false;
+          typedState = new Array(targetText.length).fill(null);
+          hiddenInput.value = "";
+          wpmVal.textContent = "0";
+          accVal.textContent = "100%";
+          comboVal.textContent = "0";
+          playerVehicle.style.left = "0%";
+          botVehicle1.style.left = "0%";
+          botVehicle2.style.left = "0%";
+          playerLane.classList.remove("moving");
+          botLane1.classList.remove("moving");
+          botLane2.classList.remove("moving");
+          trackWrap.classList.remove("boosting");
+          statusLine.className = "status-line";
+          statusLine.textContent =
+            "Click the track, then just start typing. Backspace fixes mistakes.";
+          renderText();
+          cancelAnimationFrame(animFrame);
+        }
+
+        function updateGauges() {
+          if (!startTime) return;
+          const elapsedMin = (Date.now() - startTime) / 60000;
+          const wpm =
+            elapsedMin > 0 ? Math.round(correctChars / 5 / elapsedMin) : 0;
+          const totalTyped = correctChars + mistakes;
+          const acc =
+            totalTyped > 0
+              ? Math.round((correctChars / totalTyped) * 100)
+              : 100;
+          wpmVal.textContent = wpm;
+          accVal.textContent = acc + "%";
+          comboVal.textContent = combo;
+          return wpm;
+        }
+
+        function animateBots() {
+          if (!raceActive || raceOver) {
+            return;
+          }
+          const elapsedMin = (Date.now() - startTime) / 60000;
+          const bot1Progress = Math.min(
+            100,
+            ((BOT1_WPM * 5 * elapsedMin) / targetText.length) * 100,
+          );
+          const bot2Progress = Math.min(
+            100,
+            ((BOT2_WPM * 5 * elapsedMin) / targetText.length) * 100,
+          );
+          botVehicle1.style.left = Math.min(bot1Progress, 96) + "%";
+          botVehicle2.style.left = Math.min(bot2Progress, 96) + "%";
+
+          if (bot1Progress >= 100 || bot2Progress >= 100) {
+            finishRace(false);
+            return;
+          }
+          animFrame = requestAnimationFrame(animateBots);
+        }
+
+        function finishRace(playerWon) {
+          raceOver = true;
+          raceActive = false;
+          playerLane.classList.remove("moving");
+          botLane1.classList.remove("moving");
+          botLane2.classList.remove("moving");
+          trackWrap.classList.remove("boosting");
+          cancelAnimationFrame(animFrame);
+          const wpm = updateGauges();
+          if (playerWon) {
+            statusLine.className = "status-line win";
+            statusLine.textContent = `🏁 YOU WIN! ${wpm} WPM · max combo ${maxCombo}. New Race to go again.`;
+          } else {
+            statusLine.className = "status-line lose";
+            statusLine.textContent = `Race over — a rival crossed first. Your pace: ${wpm} WPM. New Race for a rematch.`;
+          }
+        }
+
+        function handleInput() {
+          if (raceOver) return;
+          const val = hiddenInput.value;
+
+          if (!raceActive && val.length > 0) {
+            raceActive = true;
+            startTime = Date.now();
+            playerLane.classList.add("moving");
+            botLane1.classList.add("moving");
+            botLane2.classList.add("moving");
+            statusLine.className = "status-line";
+            statusLine.textContent =
+              "GO! Keep typing — mistakes cost you speed.";
+            animateBots();
+          }
+
+          // handle backspace naturally via input length shrinking
+          if (val.length < typedChars) {
+            // recompute typedState/correctChars for shrink
+            for (let i = val.length; i < typedChars; i++) {
+              if (typedState[i] === "ok") correctChars--;
+              typedState[i] = null;
+            }
+            typedChars = val.length;
+            combo = 0;
+            renderText();
+            updateGauges();
+            return;
+          }
+
+          // process newly typed chars
+          for (let i = typedChars; i < val.length; i++) {
+            const typedCh = val[i];
+            const targetCh = targetText[i];
+            if (typedCh === targetCh) {
+              typedState[i] = "ok";
+              correctChars++;
+              combo++;
+              if (combo > maxCombo) maxCombo = combo;
+            } else {
+              typedState[i] = "bad";
+              mistakes++;
+              combo = 0;
+            }
+          }
+          typedChars = val.length;
+
+          const wpm = updateGauges();
+          trackWrap.classList.toggle("boosting", wpm >= 55);
+
+          const progress = Math.min(
+            100,
+            (typedChars / targetText.length) * 100,
+          );
+          playerVehicle.style.left = Math.min(progress, 96) + "%";
+
+          renderText();
+
+          if (typedChars >= targetText.length) {
+            finishRace(true);
+          }
+        }
+
+        hiddenInput.addEventListener("input", handleInput);
+        document.body.addEventListener("click", (e) => {
+          if (e.target.closest("select, button")) return;
+          hiddenInput.focus();
+        });
+        restartBtn.addEventListener("click", resetRace);
+        difficultySel.addEventListener("change", resetRace);
+
+        resetRace();
+        hiddenInput.focus();
+      })();
+    </script>
+  </body>
+</html>
