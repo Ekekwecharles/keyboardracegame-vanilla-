@@ -268,6 +268,12 @@
         letter-spacing: 1px;
       }
 
+      .status-line.stuck {
+        color: var(--amber);
+        font-family: "Orbitron", sans-serif;
+        letter-spacing: 1px;
+      }
+
       #hiddenInput {
         position: absolute;
         opacity: 0;
@@ -495,7 +501,7 @@
         let raceOver = false;
         let animFrame = null;
         const BOT1_WPM = 45;
-        const BOT2_WPM = 70;
+        const BOT2_WPM = 60;
 
         const textDisplay = document.getElementById("textDisplay");
         const statusLine = document.getElementById("statusLine");
@@ -654,6 +660,12 @@
             combo = 0;
             renderText();
             updateGauges();
+            // clear a "stuck" message if the player is now correcting mistakes
+            if (statusLine.classList.contains("stuck")) {
+              statusLine.className = "status-line";
+              statusLine.textContent =
+                "GO! Keep typing — mistakes cost you speed.";
+            }
             return;
           }
 
@@ -679,14 +691,22 @@
 
           const progress = Math.min(
             100,
-            (typedChars / targetText.length) * 100,
+            (correctChars / targetText.length) * 100,
           );
           playerVehicle.style.left = Math.min(progress, 96) + "%";
 
           renderText();
 
-          if (typedChars >= targetText.length) {
+          if (correctChars >= targetText.length) {
             finishRace(true);
+          } else if (typedChars >= targetText.length) {
+            // Player has typed through the whole text but still has
+            // uncorrected mistakes sitting in it — they can't finish
+            // until those are fixed. Let them know instead of leaving
+            // them stuck with no feedback.
+            statusLine.className = "status-line stuck";
+            statusLine.textContent =
+              "⚠ Backspace and fix your mistakes to cross the finish line!";
           }
         }
 
