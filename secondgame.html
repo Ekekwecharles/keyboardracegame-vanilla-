@@ -132,6 +132,7 @@
         margin-bottom: 20px;
         border-bottom: 1px solid var(--line);
         overflow-x: auto;
+        overflow-y: hidden;
       }
       nav.tabs button {
         font-family: "Orbitron", sans-serif;
@@ -1697,7 +1698,7 @@
             if (i < typedChars)
               cls = typedState[i] === "ok" ? "char-correct" : "char-wrong";
             else if (i === typedChars) cls = "char-current";
-            html += `<span class="${cls}">${ch === " " ? "&nbsp;" : ch}</span>`;
+            html += `<span class="${cls}">${ch}</span>`;
           }
           textDisplay.innerHTML = html;
         }
