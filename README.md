@@ -70,7 +70,4 @@ You can also serve them with any static file server, or double-click the file in
 
 - Multiplayer in `secondgame.html` relies on `BroadcastChannel`, which only synchronizes across tabs/windows in the same browser profile. For true cross-device multiplayer you'd need to swap this out for a real-time backend (e.g. WebSockets or a service like Pusher).
 - No external JS libraries are used, everything (word generation, WPM/accuracy calculation, race animation) is hand-rolled.
-
-## License
-
-Add your preferred license here (MIT, for example) if you plan to make this public.
+- Planned: a rebuild with Next.js and real-time sync via WebSockets/Pusher for actual cross-device multiplayer.

@@ -1939,9 +1939,10 @@
           }
         }
         hiddenInput.addEventListener("input", handleInput);
-        document
-          .querySelector("#panel-race")
-          .addEventListener("click", () => hiddenInput.focus());
+        document.querySelector("#panel-race").addEventListener("click", (e) => {
+          if (e.target.closest("select, button")) return;
+          hiddenInput.focus();
+        });
         document
           .getElementById("restartBtn")
           .addEventListener("click", resetRace);
