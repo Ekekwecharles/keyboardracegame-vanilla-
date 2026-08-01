@@ -1292,6 +1292,7 @@
             customBot2: 65,
           };
         }
+
         function loadProfile() {
           try {
             return {
@@ -1302,6 +1303,7 @@
             return defaultProfile();
           }
         }
+
         function saveProfile() {
           localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
           renderHeader();
@@ -1326,6 +1328,7 @@
         function xpForLevel(l) {
           return l * 750;
         }
+
         function recalcLevel() {
           let lvl = 1;
           let remaining = profile.xp;
@@ -1924,7 +1927,7 @@
           const { wpm } = updateGauges();
           trackWrap.classList.toggle("boosting", wpm >= 55);
 
-          const you = lanes.find((l) => l.key === "you");
+          const you = lanes.find((l) => l.kind === "you");
           if (you) you.vehicleEl.style.left = playerProgressPct() + "%";
           if (mpRoom) mpBroadcastProgress();
 
