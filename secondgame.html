@@ -1452,6 +1452,7 @@
           if (car.unlock.type === "coins") return false; // must be purchased explicitly
           return false;
         }
+
         function unlockRequirementText(car) {
           if (car.unlock.type === "pro") return "Requires Pro";
           if (car.unlock.type === "level")
@@ -1878,6 +1879,7 @@
           .addEventListener("click", () => {
             closeModal("resultModal");
             resetRace();
+            hiddenInput.focus();
           });
 
         function handleInput() {
@@ -1946,9 +1948,10 @@
           if (e.target.closest("select, button")) return;
           hiddenInput.focus();
         });
-        document
-          .getElementById("restartBtn")
-          .addEventListener("click", resetRace);
+        document.getElementById("restartBtn").addEventListener("click", () => {
+          resetRace();
+          hiddenInput.focus();
+        });
 
         /* ============================================================
      MULTIPLAYER (BroadcastChannel — same-device room sync)
