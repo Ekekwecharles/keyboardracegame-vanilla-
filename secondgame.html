@@ -1228,6 +1228,10 @@
           rookie: { bots: [30, 42], penalty: 2, label: "Rookie" },
           pro: { bots: [45, 65], penalty: 5, label: "Pro" },
           legend: { bots: [60, 85], penalty: 9, label: "Legend" },
+          // custom.bots/penalty here are placeholders — currentDifficultyConfig()
+          // always overrides them with the live settings.customBot1/customBot2/
+          // customPenalty values instead. Only custom.label is actually read
+          // (by updateModeHint()), the bots/penalty fields below are unused.
           custom: { bots: [45, 65], penalty: 5, label: "Custom" },
         };
 
@@ -1605,6 +1609,11 @@
           saveSettings();
         });
 
+        // Returns the active difficulty settings for the current race.
+        // For "custom", builds a fresh object from the live slider values
+        // (settings.customBot1/customBot2/customPenalty) rather than using
+        // DIFFICULTIES.custom, since those need to reflect whatever the
+        // player has the sliders set to right now.
         function currentDifficultyConfig() {
           if (settings.difficulty === "custom") {
             return {
@@ -1874,6 +1883,9 @@
       </div>`;
           openModal("resultModal");
         }
+        // "Race Again" button on the result modal: close the modal, reset
+        // the race, and refocus the hidden input so typing works right
+        // away without an extra click on the track.
         document
           .getElementById("resultRestartBtn")
           .addEventListener("click", () => {
@@ -1948,10 +1960,14 @@
           if (e.target.closest("select, button")) return;
           hiddenInput.focus();
         });
-        document.getElementById("restartBtn").addEventListener("click", () => {
-          resetRace();
-          hiddenInput.focus();
-        });
+        // "New Race" button: reset the race, then refocus the hidden
+        // input so typing starts working immediately.
+        document
+          .getElementById("restartBtn")
+          .addEventListener("click", () => {
+            resetRace();
+            hiddenInput.focus();
+          });
 
         /* ============================================================
      MULTIPLAYER (BroadcastChannel — same-device room sync)
@@ -1970,11 +1986,21 @@
           return s;
         }
 
+        // Called when a player creates a room (asHost = true) or joins one
+        // (asHost = false) using the same room code. Both tabs end up
+        // "tuned in" to the same BroadcastChannel name, which is how they
+        // can exchange messages with each other.
         function mpJoin(code, asHost) {
           mpRoom = code.toUpperCase();
           mpIsHost = asHost;
           mpMyName = profile.name + "#" + Math.floor(Math.random() * 900 + 100);
+
+          // The channel name is derived from the room code, so both tabs
+          // must compute the exact same string to end up on the same
+          // "radio frequency". Note: BroadcastChannel only works between
+          // tabs on the same browser/device, not across the network.
           mpChannel = new BroadcastChannel("redline-room-" + mpRoom);
+
           mpPlayers = {};
           mpPlayers[mpMyName] = {
             name: mpMyName,
@@ -1983,9 +2009,15 @@
             finishedAt: null,
           };
 
+          // Fires whenever ANOTHER tab on this channel calls postMessage().
+          // A tab never receives its own broadcasts, only messages sent by
+          // other tabs tuned to the same channel name.
           mpChannel.onmessage = (ev) => {
             const msg = ev.data;
             if (msg.type === "hello") {
+              // A new player announced themselves. Only the host reacts
+              // to this by adding them to the roster and re-broadcasting
+              // the full player list to everyone.
               if (mpIsHost) {
                 mpPlayers[msg.name] = {
                   name: msg.name,
@@ -1996,12 +2028,16 @@
                 mpBroadcastRoster();
               }
             } else if (msg.type === "roster") {
+              // Host sent the full player list — replace our local copy.
               mpPlayers = msg.players;
               renderMpLobby();
             } else if (msg.type === "progress") {
+              // Another player's typing progress update — move their car.
               if (mpPlayers[msg.name]) mpPlayers[msg.name].pct = msg.pct;
               renderMpTrack();
             } else if (msg.type === "start") {
+              // Host started the race — begin it locally with the same
+              // text and start time so everyone races in sync.
               mpBeginRace(msg.text, msg.startAt, msg.penalty);
             } else if (msg.type === "finish") {
               if (mpPlayers[msg.name]) mpPlayers[msg.name].finishedAt = msg.at;
@@ -2009,6 +2045,8 @@
             }
           };
 
+          // If we're joining (not hosting), announce ourselves to the room
+          // so the host can add us to the roster.
           if (!mpIsHost)
             mpChannel.postMessage({ type: "hello", name: mpMyName });
 
@@ -2019,6 +2057,9 @@
           renderMpLobby();
         }
 
+        // Host-only: pushes the current player list out to everyone else
+        // on the channel, then updates the host's own lobby view directly
+        // (since postMessage doesn't loop back to the sender).
         function mpBroadcastRoster() {
           mpChannel.postMessage({ type: "roster", players: mpPlayers });
           renderMpLobby();
@@ -2124,6 +2165,9 @@
           );
         }
 
+        // Broadcasts OUR OWN typing progress to the other tab(s) on the
+        // channel. This does NOT update our own car — that happens
+        // directly in handleInput() — it only lets peers see us moving.
         function mpBroadcastProgress() {
           if (!mpChannel) return;
           mpPlayers[mpMyName].pct = playerProgressPct();
@@ -2133,6 +2177,11 @@
             pct: mpPlayers[mpMyName].pct,
           });
         }
+
+        // Moves peers' cars on screen based on the last progress % we
+        // received from them via mpChannel.onmessage. Only touches
+        // "peer" lanes — our own lane is handled separately in
+        // handleInput() since we never receive our own broadcasts.
         function renderMpTrack() {
           lanes.forEach((lane) => {
             if (lane.kind === "peer" && mpPlayers[lane.key]) {
@@ -2141,6 +2190,9 @@
             }
           });
         }
+
+        // Called locally when WE finish typing the text first. Tells the
+        // other tab(s) we're done, then records the result same as solo.
         function mpFinish() {
           raceOver = true;
           raceActive = false;
@@ -2164,9 +2216,22 @@
           showResultModal(true, wpm, acc, 1);
         }
 
-        // auto-join if URL has ?room=
+        // AUTO-JOIN VIA INVITE LINK
+        // This runs once, top-to-bottom, when the page loads — there's no
+        // event listener watching the URL. When a friend opens a link like
+        // "yoursite.com/redline/?room=AB3K" (generated by the "Copy Invite
+        // Link" button), it's a full page load/reload, so this script runs
+        // fresh and reads the room code straight out of the URL.
+        //
+        // location.search   -> "?room=AB3K" (or "" if no query string)
+        // URLSearchParams    -> parses that string into key/value pairs
+        // .get("room")       -> "AB3K", or null if there's no ?room= at all
         const urlRoom = new URLSearchParams(location.search).get("room");
         if (urlRoom) {
+          // Programmatically "clicks" the Multiplayer tab button, firing
+          // the same click listener that a real click would (the listener
+          // was already registered earlier in this script), then
+          // pre-fills the room code so the person just has to hit Join.
           document.querySelector('.tab-btn[data-tab="multiplayer"]').click();
           document.getElementById("joinCodeInput").value = urlRoom;
         }
