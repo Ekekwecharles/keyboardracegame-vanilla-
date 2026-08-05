@@ -1783,7 +1783,7 @@
             settings.raceMode === "time" &&
             elapsedMs / 1000 >= settings.timeSeconds
           ) {
-            finishSolo(null); // ranked by distance
+            finishSolo(); // ranked by distance
             return;
           }
 
@@ -1796,7 +1796,7 @@
               lane.vehicleEl.style.left = Math.min(pct, 96) + "%";
               lane._pct = pct;
               if (settings.raceMode === "words" && pct >= 100 && !raceOver) {
-                finishSolo(lane.key);
+                finishSolo();
               }
             }
           });
@@ -1804,7 +1804,7 @@
           animFrame = requestAnimationFrame(animateSolo);
         }
 
-        function finishSolo(loserTriggerKey) {
+        function finishSolo() {
           raceOver = true;
           raceActive = false;
           lanes.forEach((l) => l.el.classList.remove("moving"));
@@ -1909,6 +1909,7 @@
             if (raceMode === "solo") animateSolo();
           }
 
+          // If the player backspaces, we need to clear the typedState for any
           if (val.length < typedChars) {
             for (let i = val.length; i < typedChars; i++) {
               if (typedState[i] === "ok") correctChars--;
@@ -1952,10 +1953,11 @@
             settings.raceMode === "words" &&
             typedChars >= targetText.length
           ) {
-            if (raceMode === "solo") finishSolo("you");
+            if (raceMode === "solo") finishSolo();
             else mpFinish();
           }
         }
+
         hiddenInput.addEventListener("input", handleInput);
         document.querySelector("#panel-race").addEventListener("click", (e) => {
           if (e.target.closest("select, button")) return;
@@ -1963,12 +1965,10 @@
         });
         // "New Race" button: reset the race, then refocus the hidden
         // input so typing starts working immediately.
-        document
-          .getElementById("restartBtn")
-          .addEventListener("click", () => {
-            resetRace();
-            hiddenInput.focus();
-          });
+        document.getElementById("restartBtn").addEventListener("click", () => {
+          resetRace();
+          hiddenInput.focus();
+        });
 
         /* ============================================================
      MULTIPLAYER (BroadcastChannel — same-device room sync)
