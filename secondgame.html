@@ -1768,6 +1768,21 @@
           return { wpm, acc };
         }
 
+        // Converts your progress into a track position (0-100%).
+        //
+        // penaltyChars is a PERMANENT deduction, not a repeating drain: it
+        // only grows the moment a mistake happens (+diff.penalty each
+        // time), then stays fixed at that value for the rest of the race.
+        // It is subtracted from correctChars on every single call here,
+        // so a mistake made once still counts against you on every future
+        // recalculation, it never "wears off" on its own.
+        //
+        // Practical effect: after a mistake, you need to type
+        // diff.penalty MORE correct characters just to get back to the
+        // position you were at before the mistake (e.g. on Pro difficulty,
+        // penalty = 5, so one typo costs you 5 correct characters just to
+        // break even, anything beyond that is what actually moves you
+        // forward again).
         function playerProgressPct() {
           const effective = Math.max(0, correctChars - penaltyChars);
           return Math.min(96, (effective / targetText.length) * 100);
