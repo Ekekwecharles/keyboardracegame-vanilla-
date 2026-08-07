@@ -1788,6 +1788,9 @@
           return Math.min(96, (effective / targetText.length) * 100);
         }
 
+        // Drives the solo race's bot cars every animation frame while a
+        // race is in progress. Runs via requestAnimationFrame, so it
+        // fires roughly 60 times per second until the race ends.
         function animateSolo() {
           if (!raceActive || raceOver) return;
           const elapsedMs = Date.now() - startTime;
@@ -1802,6 +1805,10 @@
             return;
           }
 
+          // Move every bot lane based on its fixed WPM and how much time
+          // has elapsed. Bots progress on a straight time-based formula
+          // (no typing/mistakes involved), unlike the player, whose
+          // position comes from playerProgressPct() instead.
           lanes.forEach((lane) => {
             if (lane.kind === "bot") {
               const pct = Math.min(
@@ -1809,16 +1816,26 @@
                 ((lane.speedWpm * 5 * elapsedMin) / targetText.length) * 100,
               );
               lane.vehicleEl.style.left = Math.min(pct, 96) + "%";
+              // Stored on the lane object so finishSolo() can read every
+              // bot's current position later when calculating placement.
               lane._pct = pct;
+              // words mode: race ends the instant any bot reaches 100%
               if (settings.raceMode === "words" && pct >= 100 && !raceOver) {
                 finishSolo();
               }
             }
           });
 
+          // Schedule the next frame — this is what makes the loop keep
+          // running. It stops naturally once raceOver becomes true (the
+          // early return at the top of this function) or via
+          // cancelAnimationFrame() in finishSolo()/resetRace().
           animFrame = requestAnimationFrame(animateSolo);
         }
 
+        // Ends the current solo race, works out who actually won, and
+        // shows the result. Called either when time runs out (time-attack
+        // mode) or when someone — you or a bot — reaches 100% (words mode).
         function finishSolo() {
           raceOver = true;
           raceActive = false;
@@ -1827,6 +1844,12 @@
           cancelAnimationFrame(animFrame);
           const { wpm, acc } = updateGauges();
 
+          // Placement is worked out fresh here by comparing final track
+          // positions — NOT by who happened to trigger this function. A
+          // bot could reach 100% first while you're still ahead on
+          // effective progress once penalties are accounted for, so we
+          // always recompute from playerProgressPct() vs each bot's last
+          // known _pct rather than trusting who "finished" first.
           let placement = 1;
           const yourPct = playerProgressPct();
           lanes.forEach((l) => {
