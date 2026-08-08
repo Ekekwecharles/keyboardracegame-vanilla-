@@ -1933,10 +1933,16 @@
             hiddenInput.focus();
           });
 
+// Main handler that runs on every keystroke in the hidden input.
+        // Compares what the player has typed against the target text,
+        // tracks correctness/combo/mistakes, and drives the race forward.
         function handleInput() {
+          // Ignore any further input once the race has already ended.
           if (raceOver) return;
           const val = hiddenInput.value;
 
+          // First keystroke of the race: start the clock, kick off lane
+          // animations, and update the status message.
           if (!raceActive && val.length > 0) {
             raceActive = true;
             startTime = Date.now();
@@ -1944,23 +1950,30 @@
             statusLine.className = "status-line";
             statusLine.textContent =
               "GO! Keep typing — mistakes send you backward.";
+            // Solo mode has its own animation loop (no opponents to sync with).
             if (raceMode === "solo") animateSolo();
           }
 
-          // If the player backspaces, we need to clear the typedState for any
+          // Player backspaced: roll back typedState/correctChars for every
+          // character that got removed, then re-render and bail out early
+          // (no need to score new characters on a deletion).
           if (val.length < typedChars) {
             for (let i = val.length; i < typedChars; i++) {
               if (typedState[i] === "ok") correctChars--;
               typedState[i] = null;
             }
             typedChars = val.length;
-            combo = 0;
+            combo = 0; // backspacing breaks the combo streak
             renderText();
             updateGauges();
             return;
           }
 
+          // Difficulty affects how much a mistake penalizes progress.
           const diff = currentDifficultyConfig();
+
+          // Score only the newly typed characters (from the last known
+          // position up to the current input length).
           for (let i = typedChars; i < val.length; i++) {
             const typedCh = val[i];
             const targetCh = targetText[i];
@@ -1972,21 +1985,29 @@
             } else {
               typedState[i] = "bad";
               mistakes++;
-              combo = 0;
+              combo = 0; // a mistake resets the combo streak
               penaltyChars += diff.penalty;
             }
           }
           typedChars = val.length;
 
+          // Recalculate WPM/accuracy and flag "boosting" state above 55 WPM
+          // (purely visual — adds a speed effect to the track).
           const { wpm } = updateGauges();
           trackWrap.classList.toggle("boosting", wpm >= 55);
 
+          // Move the player's own vehicle to match their progress %.
           const you = lanes.find((l) => l.kind === "you");
           if (you) you.vehicleEl.style.left = playerProgressPct() + "%";
+
+          // In multiplayer, broadcast this player's progress to the room
+          // so other clients can update their view of this racer.
           if (mpRoom) mpBroadcastProgress();
 
           renderText();
 
+          // Race ends once the player has typed the full target text
+          // (only applies in "words" mode, not timed modes).
           if (
             settings.raceMode === "words" &&
             typedChars >= targetText.length
@@ -1996,11 +2017,18 @@
           }
         }
 
+        // Wire up the hidden input so every keystroke runs handleInput().
         hiddenInput.addEventListener("input", handleInput);
+
+        // Clicking anywhere in the race panel refocuses the hidden input,
+        // so the player can start typing without hunting for a text box.
+        // Skip this if the click was on a select/button (avoid stealing
+        // focus from actual UI controls).
         document.querySelector("#panel-race").addEventListener("click", (e) => {
           if (e.target.closest("select, button")) return;
           hiddenInput.focus();
         });
+
         // "New Race" button: reset the race, then refocus the hidden
         // input so typing starts working immediately.
         document.getElementById("restartBtn").addEventListener("click", () => {
