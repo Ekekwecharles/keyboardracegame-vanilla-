@@ -2132,48 +2132,62 @@
           renderMpLobby();
         }
 
-        function renderMpLobby() {
-          const list = document.getElementById("mpPlayerList");
-          list.innerHTML = "";
-          Object.values(mpPlayers).forEach((p) => {
-            const row = document.createElement("div");
-            row.className = "player-row";
-            row.innerHTML = `<span>${p.name}${p.name === mpMyName ? " (you)" : ""}</span><span class="host-tag">${p.isHost ? "HOST" : ""}</span>`;
-            list.appendChild(row);
-          });
-          const count = Object.keys(mpPlayers).length;
-          document.getElementById("mpStatusHint").textContent =
-            count < 2
-              ? "Waiting for at least one more player…"
-              : `${count} racers ready. ${mpIsHost ? "Start when ready." : "Waiting for host to start."}`;
-          if (mpIsHost)
-            document.getElementById("mpStartBtn").disabled = count < 2;
-        }
+// Renders the multiplayer lobby player list and updates status/start button state
+function renderMpLobby() {
+  const list = document.getElementById("mpPlayerList");
+  list.innerHTML = "";
+  // Rebuild the player list rows from current mpPlayers state
+  Object.values(mpPlayers).forEach((p) => {
+    const row = document.createElement("div");
+    row.className = "player-row";
+    // Show "(you)" next to the local player's name, and a HOST tag if applicable
+    row.innerHTML = `<span>${p.name}${p.name === mpMyName ? " (you)" : ""}</span><span class="host-tag">${p.isHost ? "HOST" : ""}</span>`;
+    list.appendChild(row);
+  });
 
-        document
-          .getElementById("createRoomBtn")
-          .addEventListener("click", () => mpJoin(roomCode(4), true));
-        document.getElementById("joinRoomBtn").addEventListener("click", () => {
-          const code = document.getElementById("joinCodeInput").value.trim();
-          if (code) mpJoin(code, false);
-        });
-        document
-          .getElementById("copyInviteBtn")
-          .addEventListener("click", () => {
-            const url = location.href.split("?")[0] + "?room=" + mpRoom;
-            navigator.clipboard
-              .writeText(url)
-              .then(() => toast("Invite link copied."));
-          });
-        document
-          .getElementById("leaveRoomBtn")
-          .addEventListener("click", () => {
-            if (mpChannel) mpChannel.close();
-            mpRoom = null;
-            mpChannel = null;
-            document.getElementById("mpLobbyControls").style.display = "flex";
-            document.getElementById("mpRoomView").style.display = "none";
-          });
+  const count = Object.keys(mpPlayers).length;
+  // Update the status hint depending on player count and host/guest role
+  document.getElementById("mpStatusHint").textContent =
+    count < 2
+      ? "Waiting for at least one more player…"
+      : `${count} racers ready. ${mpIsHost ? "Start when ready." : "Waiting for host to start."}`;
+
+  // Only the host can start; disable the start button until there are at least 2 players
+  if (mpIsHost)
+    document.getElementById("mpStartBtn").disabled = count < 2;
+}
+
+// "Create Room" button: generates a 4-char room code and joins as host
+document
+  .getElementById("createRoomBtn")
+  .addEventListener("click", () => mpJoin(roomCode(4), true));
+
+// "Join Room" button: joins an existing room using the code typed by the user
+document.getElementById("joinRoomBtn").addEventListener("click", () => {
+  const code = document.getElementById("joinCodeInput").value.trim();
+  if (code) mpJoin(code, false);
+});
+
+// "Copy Invite" button: copies a shareable room link (current URL + room param) to clipboard
+document
+  .getElementById("copyInviteBtn")
+  .addEventListener("click", () => {
+    const url = location.href.split("?")[0] + "?room=" + mpRoom;
+    navigator.clipboard
+      .writeText(url)
+      .then(() => toast("Invite link copied."));
+  });
+
+// "Leave Room" button: closes the multiplayer channel and resets state, returning to lobby controls
+document
+  .getElementById("leaveRoomBtn")
+  .addEventListener("click", () => {
+    if (mpChannel) mpChannel.close();
+    mpRoom = null;
+    mpChannel = null;
+    document.getElementById("mpLobbyControls").style.display = "flex";
+    document.getElementById("mpRoomView").style.display = "none";
+  });
 
         document.getElementById("mpStartBtn").addEventListener("click", () => {
           if (!mpIsHost) return;
