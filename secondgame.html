@@ -1933,7 +1933,7 @@
             hiddenInput.focus();
           });
 
-// Main handler that runs on every keystroke in the hidden input.
+        // Main handler that runs on every keystroke in the hidden input.
         // Compares what the player has typed against the target text,
         // tracks correctness/combo/mistakes, and drives the race forward.
         function handleInput() {
@@ -2132,62 +2132,62 @@
           renderMpLobby();
         }
 
-// Renders the multiplayer lobby player list and updates status/start button state
-function renderMpLobby() {
-  const list = document.getElementById("mpPlayerList");
-  list.innerHTML = "";
-  // Rebuild the player list rows from current mpPlayers state
-  Object.values(mpPlayers).forEach((p) => {
-    const row = document.createElement("div");
-    row.className = "player-row";
-    // Show "(you)" next to the local player's name, and a HOST tag if applicable
-    row.innerHTML = `<span>${p.name}${p.name === mpMyName ? " (you)" : ""}</span><span class="host-tag">${p.isHost ? "HOST" : ""}</span>`;
-    list.appendChild(row);
-  });
+        // Renders the multiplayer lobby player list and updates status/start button state
+        function renderMpLobby() {
+          const list = document.getElementById("mpPlayerList");
+          list.innerHTML = "";
+          // Rebuild the player list rows from current mpPlayers state
+          Object.values(mpPlayers).forEach((p) => {
+            const row = document.createElement("div");
+            row.className = "player-row";
+            // Show "(you)" next to the local player's name, and a HOST tag if applicable
+            row.innerHTML = `<span>${p.name}${p.name === mpMyName ? " (you)" : ""}</span><span class="host-tag">${p.isHost ? "HOST" : ""}</span>`;
+            list.appendChild(row);
+          });
 
-  const count = Object.keys(mpPlayers).length;
-  // Update the status hint depending on player count and host/guest role
-  document.getElementById("mpStatusHint").textContent =
-    count < 2
-      ? "Waiting for at least one more player…"
-      : `${count} racers ready. ${mpIsHost ? "Start when ready." : "Waiting for host to start."}`;
+          const count = Object.keys(mpPlayers).length;
+          // Update the status hint depending on player count and host/guest role
+          document.getElementById("mpStatusHint").textContent =
+            count < 2
+              ? "Waiting for at least one more player…"
+              : `${count} racers ready. ${mpIsHost ? "Start when ready." : "Waiting for host to start."}`;
 
-  // Only the host can start; disable the start button until there are at least 2 players
-  if (mpIsHost)
-    document.getElementById("mpStartBtn").disabled = count < 2;
-}
+          // Only the host can start; disable the start button until there are at least 2 players
+          if (mpIsHost)
+            document.getElementById("mpStartBtn").disabled = count < 2;
+        }
 
-// "Create Room" button: generates a 4-char room code and joins as host
-document
-  .getElementById("createRoomBtn")
-  .addEventListener("click", () => mpJoin(roomCode(4), true));
+        // "Create Room" button: generates a 4-char room code and joins as host
+        document
+          .getElementById("createRoomBtn")
+          .addEventListener("click", () => mpJoin(roomCode(4), true));
 
-// "Join Room" button: joins an existing room using the code typed by the user
-document.getElementById("joinRoomBtn").addEventListener("click", () => {
-  const code = document.getElementById("joinCodeInput").value.trim();
-  if (code) mpJoin(code, false);
-});
+        // "Join Room" button: joins an existing room using the code typed by the user
+        document.getElementById("joinRoomBtn").addEventListener("click", () => {
+          const code = document.getElementById("joinCodeInput").value.trim();
+          if (code) mpJoin(code, false);
+        });
 
-// "Copy Invite" button: copies a shareable room link (current URL + room param) to clipboard
-document
-  .getElementById("copyInviteBtn")
-  .addEventListener("click", () => {
-    const url = location.href.split("?")[0] + "?room=" + mpRoom;
-    navigator.clipboard
-      .writeText(url)
-      .then(() => toast("Invite link copied."));
-  });
+        // "Copy Invite" button: copies a shareable room link (current URL + room param) to clipboard
+        document
+          .getElementById("copyInviteBtn")
+          .addEventListener("click", () => {
+            const url = location.href.split("?")[0] + "?room=" + mpRoom;
+            navigator.clipboard
+              .writeText(url)
+              .then(() => toast("Invite link copied."));
+          });
 
-// "Leave Room" button: closes the multiplayer channel and resets state, returning to lobby controls
-document
-  .getElementById("leaveRoomBtn")
-  .addEventListener("click", () => {
-    if (mpChannel) mpChannel.close();
-    mpRoom = null;
-    mpChannel = null;
-    document.getElementById("mpLobbyControls").style.display = "flex";
-    document.getElementById("mpRoomView").style.display = "none";
-  });
+        // "Leave Room" button: closes the multiplayer channel and resets state, returning to lobby controls
+        document
+          .getElementById("leaveRoomBtn")
+          .addEventListener("click", () => {
+            if (mpChannel) mpChannel.close();
+            mpRoom = null;
+            mpChannel = null;
+            document.getElementById("mpLobbyControls").style.display = "flex";
+            document.getElementById("mpRoomView").style.display = "none";
+          });
 
         document.getElementById("mpStartBtn").addEventListener("click", () => {
           if (!mpIsHost) return;
@@ -2327,32 +2327,39 @@ document
           saveProfile();
         });
 
+        // Renders the player profile tab: level/XP progress, stats, badges, and race history
         function renderProfile() {
           document.getElementById("pLevel").textContent = profile.level;
-          document.getElementById("pXp").textContent =
+
+          // XP earned within the current level (total xp minus xp required for all previous levels)
+          const xpIntoLevel =
             profile.xp -
             (profile.level > 1
               ? Array.from({ length: profile.level - 1 }, (_, i) =>
                   xpForLevel(i + 1),
                 ).reduce((a, b) => a + b, 0)
               : 0);
-          const xpIntoLevel =
-            profile.xp -
-            Array.from({ length: profile.level - 1 }, (_, i) =>
-              xpForLevel(i + 1),
-            ).reduce((a, b) => a + b, 0);
+
+          document.getElementById("pXp").textContent = xpIntoLevel;
+
+          // Total xp required to complete the current level
           const xpNeeded = xpForLevel(profile.level);
           document.getElementById("pXpNext").textContent = xpNeeded;
+
+          // Fill the XP progress bar, capped at 100% in case of rounding overshoot
           document.getElementById("xpFill").style.width =
             Math.min(100, (xpIntoLevel / xpNeeded) * 100) + "%";
 
+          // Basic lifetime stats
           document.getElementById("stRaces").textContent = profile.racesPlayed;
           document.getElementById("stWins").textContent = profile.racesWon;
           document.getElementById("stBestWpm").textContent = profile.bestWpm;
+          // Average accuracy across all races; defaults to 100% if no races played yet
           document.getElementById("stAvgAcc").textContent = profile.racesPlayed
             ? Math.round(profile.accSum / profile.racesPlayed) + "%"
             : "100%";
 
+          // Render achievement badges, marking earned ones as filled/starred
           const badgeList = document.getElementById("badgeList");
           badgeList.innerHTML = "";
           ACHIEVEMENTS.forEach((a) => {
@@ -2363,6 +2370,7 @@ document
             badgeList.appendChild(b);
           });
 
+          // Render race history, or a placeholder hint if no races have been played yet
           const historyList = document.getElementById("historyList");
           if (profile.history.length === 0) {
             historyList.innerHTML =
